@@ -1,0 +1,4 @@
+inventory/**
+!inventory/example.gcp.yml
+.env
+.envrc

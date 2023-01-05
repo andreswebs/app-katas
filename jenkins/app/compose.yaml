@@ -1,0 +1,60 @@
+---
+name: jenkins
+
+networks:
+  jenkins-net: {}
+
+services:
+
+  jenkins:
+    container_name: jenkins
+    build:
+      context: .
+    networks:
+      - jenkins-net
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /usr/bin/docker:/usr/bin/docker
+      - /usr/libexec/docker:/usr/libexec/docker
+      - /var/lib/jenkins:/var/jenkins_home
+    restart: always
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.jenkins.rule=Host(`${JENKINS_HOST}`)"
+      - "traefik.http.routers.jenkins.entrypoints=web"
+      - "traefik.http.routers.jenkins.middlewares=redirect-https"
+      - "traefik.http.routers.jenkins-secure.rule=Host(`${JENKINS_HOST}`)"
+      - "traefik.http.routers.jenkins-secure.entrypoints=web-secure"
+      - "traefik.http.routers.jenkins-secure.service=jenkins-secure"
+      - "traefik.http.routers.jenkins-secure.tls=true"
+      - "traefik.http.routers.jenkins-secure.tls.certresolver=letsencrypt"
+      - "traefik.http.services.jenkins-secure.loadbalancer.server.port=8080"
+      - "traefik.http.middlewares.redirect-https.redirectscheme.scheme=https"
+      - "traefik.http.middlewares.redirect-https.redirectscheme.permanent=true"
+      - "traefik.docker.network=jenkins-net"
+
+  traefik:
+    container_name: traefik
+    image: traefik:v2.9
+    restart: always
+    networks:
+      - jenkins-net
+    command:
+      - --providers.docker
+      - --entrypoints.web.address=:80
+      - --entrypoints.web-secure.address=:443
+      - --certificatesresolvers.letsencrypt.acme.email=${LETSENCRYPT_EMAIL}
+      - --certificatesresolvers.letsencrypt.acme.storage=/letsencrypt/acme.json
+      - --certificatesresolvers.letsencrypt.acme.tlschallenge=true
+    ports:
+      - target: 80
+        published: 80
+        protocol: tcp
+        mode: host
+      - target: 443
+        published: 443
+        protocol: tcp
+        mode: host
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - /etc/letsencrypt:/letsencrypt
