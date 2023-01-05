@@ -33,7 +33,7 @@
         name: andreswebs.docker_app
       vars:
         app_name: "{{ app }}"
-        app_src: "{{ playbook_dir }}/../{{ app }}/app/"
+        app_src: "{{ playbook_dir }}/../../{{ app }}/app/"
         app_dest: "/opt/{{ app }}"
 
     - name: Check if a reboot is required
