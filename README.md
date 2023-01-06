@@ -28,7 +28,8 @@ The stack is comprised of the following tools:
 - [Traefik](https://traefik.io/)
 - [Let's Encrypt](https://letsencrypt.org/)
 
-Installation and configuration of these tools is outside the scope of this repo.
+Installation and configuration of these tools is outside the scope of this
+document.
 
 ## Structure
 
