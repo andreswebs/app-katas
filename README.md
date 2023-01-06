@@ -13,8 +13,24 @@ The idea of "code katas" comes from [Dave Thomas](https://pragdave.me/), one of
 the authors of the [Agile Manifesto](https://agilemanifesto.org/), as a way to
 bring that element of disciplined practice into software development.
 
-Here we apply this idea to DevOps practice, by deploying various apps using a
-common DevOps tech stack.
+Here we apply the idea of code katas to DevOps practice, by deploying various
+apps using a common DevOps tech stack. Those are the "app katas" included in the
+present repo.
+
+## Stack
+
+The stack is comprised of the following tools:
+
+- [Terraform](https://www.terraform.io/)
+- [Ansible](https://www.ansible.com/)
+- [Docker](https://www.docker.com/)
+- [Docker Compose](https://docs.docker.com/compose/)
+- [Traefik](https://traefik.io/)
+- [Let's Encrypt](https://letsencrypt.org/)
+
+Installation and configuration of these tools is outside the scope of this repo.
+
+## Structure
 
 ## Authors
 
@@ -24,6 +40,6 @@ common DevOps tech stack.
 
 This project is licensed under the [Unlicense](UNLICENSE.md).
 
-## References
+## Acknowledgements
 
 Dave Thomas, <http://codekata.com/>
