@@ -1,6 +1,7 @@
 locals {
-  region = "europe-west1"
-  zone   = "europe-west1-b"
+  region       = "europe-west1"
+  zone         = "europe-west1-b"
+  has_snapshot = var.snapshot_name != "" && var.snapshot_name != null
 }
 
 module "network_info" {
@@ -9,15 +10,34 @@ module "network_info" {
   network = "default"
 }
 
+data "cloudinit_config" "vm" {
+  gzip          = false
+  base64_encode = false
+
+  part {
+    content_type = "text/cloud-config"
+    content = templatefile("${path.module}/tpl/cloudinit.yaml.tftpl", {
+      device_file = "/dev/disk/by-id/google-jenkins-data"
+      mount_path  = "/mnt/disks/data"
+      username    = "jenkins"
+      mkfs        = !local.has_snapshot
+    })
+  }
+}
+
 module "vm" {
   source                       = "andreswebs/public-vm/google"
-  version                      = "0.4.0"
+  version                      = "0.5.0"
   name                         = "jenkins"
   region                       = local.region
   zone                         = local.zone
   subnetwork                   = module.network_info.subnetwork[local.region].name
   domain_name                  = "inexistent.xyz"
   external_access_ip_whitelist = var.external_access_ip_whitelist
+
+  metadata = {
+    "user-data" = data.cloudinit_config.support_vm.rendered
+  }
 
   extra_disks = [
     {

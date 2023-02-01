@@ -11,7 +11,7 @@ module "network_info" {
 
 module "vm" {
   source                       = "andreswebs/public-vm/google"
-  version                      = "0.4.0"
+  version                      = "0.5.0"
   name                         = "vaultwarden"
   region                       = local.region
   zone                         = local.zone

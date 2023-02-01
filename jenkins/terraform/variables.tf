@@ -4,6 +4,6 @@ variable "external_access_ip_whitelist" {
 }
 
 variable "snapshot_name" {
-  type = string
+  type    = string
   default = null
 }

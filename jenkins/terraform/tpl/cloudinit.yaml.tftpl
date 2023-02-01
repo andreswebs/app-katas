@@ -1,0 +1,19 @@
+#cloud-config
+
+users:
+  - name: ${username}
+    shell: /bin/bash
+    lock_passwd: true
+
+bootcmd:
+  %{~ if mkfs ~}
+  - mkfs.ext4 -m 0 -E lazy_itable_init=0,lazy_journal_init=0,discard ${device_file}
+  %{~ endif ~}
+  - fsck.ext4 -tvy ${device_file}
+  - mkdir -p ${mount_path}
+  - mount -t ext4 -O discard,default ${device_file} ${mount_path}
+
+runcmd:
+  - usermod -u 2000 ${username}
+  - groupmod -g 2000 ${username}
+  - chown -R ${username}:${username} ${mount_path}
