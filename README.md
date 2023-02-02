@@ -43,6 +43,9 @@ provider of choice.
 Create an inventory file from `_config/inventory/example.gcp.yml` and set the
 GCP project ID.
 
+Set up any needed environment variables for the app containers in
+`<app>/app/.env`, as in the example `whoami/app/.env.example`.
+
 (TODO: add more instructions)
 
 ### **Create infra:**

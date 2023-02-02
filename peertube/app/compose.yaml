@@ -3,9 +3,12 @@
 name: peertube
 
 networks:
-  web: {}
-  db: {}
-  mail: {}
+  web:
+    name: web
+  db:
+    name: db
+  mail:
+    name: mail
 
 services:
 
