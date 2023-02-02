@@ -2,7 +2,8 @@
 name: drone-ci
 
 networks:
-  drone-net: {}
+  drone-net:
+    name: drone-net
 
 services:
 

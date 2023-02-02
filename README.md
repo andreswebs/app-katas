@@ -31,8 +31,6 @@ The stack is comprised of the following tools:
 Installation and configuration of these tools is outside the scope of this
 document.
 
-## Structure
-
 ## Authors
 
 **Andre Silva** - [@andreswebs](https://github.com/andreswebs)

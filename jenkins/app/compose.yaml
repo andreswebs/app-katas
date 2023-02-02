@@ -2,7 +2,8 @@
 name: jenkins
 
 networks:
-  jenkins-net: {}
+  jenkins-net:
+    name: jenkins-net
 
 services:
 

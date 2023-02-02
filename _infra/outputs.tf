@@ -1,5 +1,6 @@
 output "apps" {
   value = {
-    vaultwarden = module.vaultwarden.app_address
+    jenkins = module.jenkins.app_address
+    # vaultwarden = module.vaultwarden.app_address
   }
 }

@@ -18,7 +18,7 @@ data "cloudinit_config" "vm" {
     content_type = "text/cloud-config"
     content = templatefile("${path.module}/tpl/cloudinit.yaml.tftpl", {
       device_file = "/dev/disk/by-id/google-jenkins-data"
-      mount_path  = "/mnt/disks/data"
+      mount_path  = "/var/lib/jenkins"
       username    = "jenkins"
       mkfs        = !local.has_snapshot
     })
@@ -36,7 +36,7 @@ module "vm" {
   external_access_ip_whitelist = var.external_access_ip_whitelist
 
   metadata = {
-    "user-data" = data.cloudinit_config.support_vm.rendered
+    "user-data" = data.cloudinit_config.vm.rendered
   }
 
   extra_disks = [
