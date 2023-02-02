@@ -31,6 +31,49 @@ The stack is comprised of the following tools:
 Installation and configuration of these tools is outside the scope of this
 document.
 
+## Deployment
+
+### **Pre-requisites:**
+
+Terraform and Ansible must be installed in the operator machine.
+
+Terraform and Ansible credentials must have been configured for the cloud
+provider of choice.
+
+Create an inventory file from `_config/inventory/example.gcp.yml` and set the
+GCP project ID.
+
+(TODO: add more instructions)
+
+### **Create infra:**
+
+Individual app modules are instantiated in `_infra/main.tf`.
+
+```sh
+pushd ./_infra
+terraform init
+terraform plan
+terraform apply
+popd
+```
+
+(Grab the Terraform outputs to configure DNS)
+
+### **DNS:**
+
+Add DNS records pointing to the instance IPs output in the previous step.
+
+### **Deploy docker app:**
+
+Example:
+
+```sh
+pushd ./_config
+ansible-galaxy install -r requirements.yml
+./playbooks/gcp-docker-app.yml -i inventory/yourinventory.gcp.yml -e upgrade_system=true -e app=whoami
+popd
+```
+
 ## Authors
 
 **Andre Silva** - [@andreswebs](https://github.com/andreswebs)

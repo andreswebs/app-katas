@@ -12,11 +12,11 @@ module "network_info" {
 module "vm" {
   source                       = "andreswebs/public-vm/google"
   version                      = "0.5.0"
-  name                         = "peertube"
+  name                         = "whoami"
   region                       = local.region
   zone                         = local.zone
   subnetwork                   = module.network_info.subnetwork[local.region].name
-  domain_name                  = "technet.link"
+  domain_name                  = "inexistent.xyz"
   external_access_ip_whitelist = var.external_access_ip_whitelist
 }
 
@@ -24,7 +24,7 @@ module "dns" {
   source                = "andreswebs/reverse-dns/google"
   version               = "0.1.0"
   dns_reverse_zone_name = "internal-reverse"
-  dns_zone_name         = "internal-technet-link"
+  dns_zone_name         = "internal-inexistent-xyz"
   fqdn                  = module.vm.hostname
   ipv4_address          = module.vm.internal_ip
 }

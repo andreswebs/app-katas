@@ -1,12 +1,28 @@
 locals {
-  region = "europe-west1"
-  zone   = "europe-west1-d"
+  region       = "europe-west1"
+  zone         = "europe-west1-b"
+  has_snapshot = var.snapshot_name != "" && var.snapshot_name != null
 }
 
 module "network_info" {
   source  = "andreswebs/network-info/google"
   version = "0.2.0"
   network = "default"
+}
+
+data "cloudinit_config" "vm" {
+  gzip          = false
+  base64_encode = false
+
+  part {
+    content_type = "text/cloud-config"
+    content = templatefile("${path.module}/tpl/cloudinit.yaml.tftpl", {
+      device_file = "/dev/disk/by-id/google-vaultwarden-data"
+      mount_path  = "/var/lib/vaultwarden"
+      username    = "vaultwarden"
+      mkfs        = !local.has_snapshot
+    })
+  }
 }
 
 module "vm" {
@@ -18,6 +34,10 @@ module "vm" {
   subnetwork                   = module.network_info.subnetwork[local.region].name
   domain_name                  = "technet.link"
   external_access_ip_whitelist = var.external_access_ip_whitelist
+
+  metadata = {
+    "user-data" = data.cloudinit_config.vm.rendered
+  }
 
   extra_disks = [
     {
