@@ -23,3 +23,8 @@
 #   source                       = "../whoami/terraform"
 #   external_access_ip_whitelist = var.external_access_ip_whitelist
 # }
+
+module "k3s" {
+  source                       = "../k3s/terraform"
+  external_access_ip_whitelist = var.external_access_ip_whitelist
+}
