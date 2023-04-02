@@ -21,7 +21,7 @@ data "cloudinit_config" "vm" {
     content_type = "text/cloud-config"
     content = templatefile("${path.module}/tpl/cloudinit.yaml.tftpl", {
       device_file = "/dev/disk/by-id/google-${local.storage_name}"
-      mount_path  = "/mnt/disks/${local.storage_name}"
+      mount_path  = "/var/lib/rancher/k3s"
       mkfs        = !local.has_snapshot
     })
   }
@@ -61,6 +61,21 @@ module "dns" {
   dns_zone_name         = "internal-technet-link"
   fqdn                  = module.vm.hostname
   ipv4_address          = module.vm.internal_ip
+}
+
+resource "google_compute_firewall" "external_kube" {
+  name    = "k3s-external-kube"
+  network = module.network_info.network.name
+
+  target_tags = ["k3s"]
+
+  source_ranges = var.external_access_ip_whitelist
+
+  allow {
+    protocol = "tcp"
+    ports    = ["6443"]
+  }
+
 }
 
 locals {
