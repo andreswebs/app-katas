@@ -36,7 +36,6 @@ module "vm" {
   subnetwork                   = module.network_info.subnetwork[local.region].name
   domain_name                  = "technet.link"
   external_access_ip_whitelist = var.external_access_ip_whitelist
-  firewall_allow_web           = false
   machine_type                 = local.machine_type
 
   metadata = {
