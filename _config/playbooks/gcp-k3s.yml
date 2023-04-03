@@ -1,0 +1,66 @@
+#!/usr/bin/env ansible-playbook
+---
+- name: k3s
+
+  hosts:
+    - vm_tag_k3s
+
+  vars:
+    kube_config_remote: /etc/rancher/k3s/k3s.yaml
+    kube_config_local: /tmp/k3s.yaml
+
+  become: yes
+  become_user: root
+  tasks:
+
+    - name: Upgrade system
+      ansible.builtin.apt:
+        update_cache: yes
+        upgrade: dist
+        autoremove: yes
+        autoclean: yes
+      async: 3600
+      poll: 5
+      when: upgrade_system | default(false) | bool
+      tags:
+        - system
+
+    - ansible.builtin.import_role:
+        name: googlecloudplatform.google_cloud_ops_agents
+      vars:
+        agent_type: ops-agent
+        # main_config_file: ops-agent.config.yml
+      tags:
+        - google-ops-agent
+
+    - name: Install k3s
+      ansible.builtin.shell:
+        cmd: curl -sfL https://get.k3s.io | INSTALL_K3S_EXEC="--tls-san {{ ansible_host }}" sh -s -
+        creates: "{{ kube_config_remote }}"
+      tags:
+        - k3s-install
+
+    - name: Fetch kube config
+      ansible.builtin.fetch:
+        src: "{{ kube_config_remote }}"
+        dest: "{{ kube_config_local }}"
+        flat: true
+      tags:
+        - k3s-install
+        - k3s-fetch-config
+
+    - name: Check if a reboot is required
+      ansible.builtin.shell: "[ -f /var/run/reboot-required ]"
+      failed_when: false
+      register: reboot_required
+      changed_when: reboot_required.rc == 0
+      notify:
+        - reboot
+      tags:
+        - system
+
+  handlers:
+
+    - name: reboot
+      ansible.builtin.reboot:
+        msg: Maintenance reboot initiated
