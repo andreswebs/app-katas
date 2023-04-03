@@ -49,6 +49,28 @@
         - k3s-install
         - k3s-fetch-config
 
+    - name: Register k3s host
+      ansible.builtin.command:
+        cmd: "echo {{ ansible_host }}"
+      register: k3s_host
+      changed_when: false
+      tags:
+        - k3s-install
+        - k3s-fetch-config
+
+    - name: Update local kube config
+      ansible.builtin.replace:
+        path: "{{ kube_config_local }}"
+        after: "server:"
+        regexp: "https://127.0.0.1:6443"
+        replace: "https://{{ k3s_host.stdout }}:6443"
+        backup: true
+      delegate_to: localhost
+      become: no
+      tags:
+        - k3s-install
+        - k3s-fetch-config
+
     - name: Check if a reboot is required
       ansible.builtin.shell: "[ -f /var/run/reboot-required ]"
       failed_when: false
