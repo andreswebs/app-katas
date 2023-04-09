@@ -1,8 +1,7 @@
 locals {
-  region = "europe-west1"
-  zone   = "europe-west1-b"
-  # machine_type = "n2-standard-4"
-  machine_type = "n2-standard-8"
+  region       = "europe-west1"
+  zone         = "europe-west1-b"
+  machine_type = "n2-standard-4"
   storage_name = "k3s-storage"
   has_snapshot = var.snapshot_name != "" && var.snapshot_name != null
 }
@@ -47,7 +46,7 @@ module "vm" {
       name     = local.storage_name
       zone     = local.zone
       type     = "pd-ssd"
-      size     = 200
+      size     = 20
       snapshot = var.snapshot_name
     }
   ]
