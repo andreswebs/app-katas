@@ -2,8 +2,7 @@
 plugin: gcp_compute
 projects:
   - example-gcp-project-id
-auth_kind: serviceaccount
-service_account_file: ~/.gcp-keys/ansible.json
+auth_kind: application
 keyed_groups:
   - key: tags["items"]
     prefix: vm_tag
