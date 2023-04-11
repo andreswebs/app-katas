@@ -3,19 +3,13 @@ locals {
   zone   = "europe-west1-b"
 }
 
-module "network_info" {
-  source  = "andreswebs/network-info/google"
-  version = "0.2.0"
-  network = "default"
-}
-
 module "vm" {
   source                       = "andreswebs/public-vm/google"
   version                      = "0.5.0"
   name                         = "drone"
   region                       = local.region
   zone                         = local.zone
-  subnetwork                   = module.network_info.subnetwork[local.region].name
+  subnetwork                   = "default"
   domain_name                  = "technet.link"
   external_access_ip_whitelist = var.external_access_ip_whitelist
 }

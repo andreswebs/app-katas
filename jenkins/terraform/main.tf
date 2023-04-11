@@ -4,12 +4,6 @@ locals {
   has_snapshot = var.snapshot_name != "" && var.snapshot_name != null
 }
 
-module "network_info" {
-  source  = "andreswebs/network-info/google"
-  version = "0.2.0"
-  network = "default"
-}
-
 data "cloudinit_config" "vm" {
   gzip          = false
   base64_encode = false
@@ -31,7 +25,7 @@ module "vm" {
   name                         = "jenkins"
   region                       = local.region
   zone                         = local.zone
-  subnetwork                   = module.network_info.subnetwork[local.region].name
+  subnetwork                   = "default"
   domain_name                  = "inexistent.xyz"
   external_access_ip_whitelist = var.external_access_ip_whitelist
 
@@ -54,7 +48,7 @@ module "dns" {
   source                = "andreswebs/reverse-dns/google"
   version               = "0.1.0"
   dns_reverse_zone_name = "internal-reverse"
-  dns_zone_name         = "internal-inexistent-xyz"
+  dns_zone_name         = "internal-technet-link"
   fqdn                  = module.vm.hostname
   ipv4_address          = module.vm.internal_ip
 }
