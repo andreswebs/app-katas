@@ -1,4 +1,5 @@
 inventory/**
 !inventory/example.gcp.yml
+!inventory/hcloud.yml
 .env
 .envrc
