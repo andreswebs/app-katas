@@ -4,6 +4,7 @@ locals {
   machine_type = "n2-standard-4"
   storage_name = "k3s-storage"
   has_snapshot = var.snapshot_name != "" && var.snapshot_name != null
+  network_name = "default"
 }
 
 data "cloudinit_config" "vm" {
@@ -57,7 +58,7 @@ module "dns" {
 
 resource "google_compute_firewall" "external_kube" {
   name    = "k3s-external-kube"
-  network = module.network_info.network.name
+  network = local.network_name
 
   target_tags = ["k3s"]
 

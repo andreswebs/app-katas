@@ -3,7 +3,7 @@
 - name: k3s
 
   hosts:
-    - vm_tag_k3s
+    - k3s
 
   vars:
     kube_config_remote: /etc/rancher/k3s/k3s.yaml
@@ -24,14 +24,6 @@
       when: upgrade_system | default(false) | bool
       tags:
         - system
-
-    - ansible.builtin.import_role:
-        name: googlecloudplatform.google_cloud_ops_agents
-      vars:
-        agent_type: ops-agent
-        # main_config_file: ops-agent.config.yml
-      tags:
-        - google-ops-agent
 
     - ansible.builtin.import_role:
         name: k3s

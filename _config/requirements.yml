@@ -1,1 +1,5 @@
+---
 - src: andreswebs.docker_app
+
+collections:
+  - name: hetzner.hcloud

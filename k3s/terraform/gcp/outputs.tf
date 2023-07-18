@@ -3,4 +3,3 @@ output "app_address" {
     (local.app_hostname) = local.app_ip_external
   }
 }
-
