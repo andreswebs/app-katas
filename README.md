@@ -50,10 +50,10 @@ Set up any needed environment variables for the app containers in
 
 ### **Create infra:**
 
-Individual app modules are instantiated in `_infra/main.tf`.
+Individual app modules are instantiated in `_infra/gcp/main.tf`.
 
 ```sh
-pushd ./_infra
+pushd ./_infra/gcp
 terraform init
 terraform plan
 terraform apply
@@ -74,6 +74,39 @@ Example:
 pushd ./_config
 ansible-galaxy install -r requirements.yml
 ./playbooks/gcp-docker-app.yml -i inventory/yourinventory.gcp.yml -e upgrade_system=true -e app=whoami
+popd
+```
+
+## Example: k3s single node on Hetzner Cloud
+
+```sh
+export HCLOUD_TOKEN="examplehcloudtoken"
+```
+
+```sh
+pushd ./_infra/hcloud
+terraform init
+terraform plan
+terraform apply
+popd
+```
+
+```sh
+pushd ./_config
+./playbooks/hcloud-k3s.yml --inventory inventory/hcloud.yml
+popd
+```
+
+```sh
+export KUBECONFIG=/tmp/k3s.yaml
+export SERVER_IP="<SERVER_IP_HERE>"
+kubectl apply -f ./k3s/hello-world/
+curl "${SERVER_IP}"
+```
+
+```sh
+pushd ./_infra/hcloud
+terraform destroy
 popd
 ```
 

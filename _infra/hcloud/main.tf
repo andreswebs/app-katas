@@ -1,5 +1,5 @@
 module "k3s" {
-  source       = "../../k3s/terraform/hetzner/"
+  source       = "../../k3s/terraform/hcloud/"
   name         = "k3s"
   ssh_key_name = "default"
 }
