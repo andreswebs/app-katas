@@ -9,7 +9,7 @@ services:
 
   app:
     container_name: app
-    image: containous/whoami
+    image: traefik/whoami
     restart: always
     networks:
       - web
