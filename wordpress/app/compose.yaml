@@ -4,6 +4,8 @@ name: wordpress
 networks:
   web:
     name: web
+  db:
+    name: db
 
 secrets:
   auth_key:
@@ -34,7 +36,9 @@ services:
     restart: always
     build:
       context: .
+      dockerfile: wordpress.Dockerfile
     networks:
+      - db
       - web
     depends_on:
       - wordpress-db
@@ -71,8 +75,13 @@ services:
       - WORDPRESS_CONFIG_EXTRA
 
   wordpress-db:
-    image: mariadb:latest
+    container_name: wordpress-db
+    build:
+      context: .
+      dockerfile: mariadb.Dockerfile
     restart: always
+    networks:
+      - db
     environment:
       - MYSQL_DATABASE
       - MYSQL_USER

@@ -1,6 +1,6 @@
 module "instance" {
   source         = "andreswebs/public-ec2/aws"
-  version        = "0.2.0"
+  version        = "0.4.0"
   name           = "wordpress"
   subnet_id      = var.subnet_id
   cidr_whitelist = var.cidr_whitelist
