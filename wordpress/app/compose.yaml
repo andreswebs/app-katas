@@ -37,11 +37,11 @@ services:
     build:
       context: .
       dockerfile: wordpress.Dockerfile
+    depends_on:
+      - wordpress-db
     networks:
       - db
       - web
-    depends_on:
-      - wordpress-db
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.app.rule=Host(`${APP_HOST}`)"
@@ -56,14 +56,11 @@ services:
       - "traefik.http.middlewares.redirect-https.redirectscheme.scheme=https"
       - "traefik.http.middlewares.redirect-https.redirectscheme.permanent=true"
       - "traefik.docker.network=web"
-    volumes:
-      - /var/lib/wordpress:/var/www/html
     environment:
       - WORDPRESS_DB_HOST
       - WORDPRESS_DB_NAME
       - WORDPRESS_DB_USER
       - WORDPRESS_DB_PASSWORD_FILE
-      - WORDPRESS_TABLE_PREFIX
       - WORDPRESS_AUTH_KEY_FILE
       - WORDPRESS_AUTH_SALT_FILE
       - WORDPRESS_SECURE_AUTH_KEY_FILE
@@ -73,6 +70,19 @@ services:
       - WORDPRESS_NONCE_KEY_FILE
       - WORDPRESS_NONCE_SALT_FILE
       - WORDPRESS_CONFIG_EXTRA
+    volumes:
+      - /var/lib/wordpress:/var/www/html
+    secrets:
+      - db_root_password
+      - db_password
+      - auth_key
+      - auth_salt
+      - logged_in_key
+      - logged_in_salt
+      - nonce_key
+      - nonce_salt
+      - secure_auth_key
+      - secure_auth_salt
 
   wordpress-db:
     container_name: wordpress-db
@@ -88,7 +98,7 @@ services:
       - MYSQL_ROOT_PASSWORD_FILE
       - MYSQL_PASSWORD_FILE
     volumes:
-      - /var/lib/mysql:/var/lib/mysql
+      - /var/lib/wordpress-db:/var/lib/mysql
     secrets:
       - db_root_password
       - db_password
