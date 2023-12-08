@@ -3,3 +3,4 @@
 
 collections:
   - name: hetzner.hcloud
+  - name: amazon.aws

@@ -1,0 +1,3 @@
+secrets/
+compose.yaml
+.env*

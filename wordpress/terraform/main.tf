@@ -21,6 +21,6 @@ module "instance" {
 }
 
 locals {
-  app_hostname = "wordpress.p41.inexistent.xyz"
+  app_hostname = "blog.p41.inexistent.xyz"
   app_ip_external = module.instance.public_ip
 }

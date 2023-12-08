@@ -10,3 +10,13 @@ Volumes:
 
 - Themes go in a subdirectory in `/var/www/html/wp-content/themes/`
 - Plugins go in a subdirectory in `/var/www/html/wp-content/plugins/`
+
+PHP extensions:
+
+<https://make.wordpress.org/hosting/handbook/server-environment/#php-extensions>
+
+Salts:
+
+```sh
+curl "https://api.wordpress.org/secret-key/1.1/salt/" -sSo salts
+```

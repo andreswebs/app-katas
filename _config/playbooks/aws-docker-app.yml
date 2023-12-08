@@ -1,0 +1,51 @@
+#!/usr/bin/env ansible-playbook
+---
+- name: "App Deployment: {{ app }}"
+
+  hosts:
+    - "vm_tag_{{ app }}"
+
+  become: yes
+  become_user: root
+  tasks:
+
+    - name: Upgrade system
+      ansible.builtin.apt:
+        update_cache: yes
+        upgrade: dist
+        autoremove: yes
+        autoclean: yes
+      async: 3600
+      poll: 5
+      when: upgrade_system | default(false) | bool
+      tags:
+        - system
+
+    - ansible.builtin.import_role:
+        name: andreswebs.docker_app
+      vars:
+        app_name: "{{ app }}"
+        app_src: "{{ playbook_dir }}/../../{{ app }}/app/"
+        app_dest: "/opt/{{ app }}"
+        app_uid: 1000
+        app_gid: 1000
+        app_user: ubuntu
+        app_group: ubuntu
+        app_home: /home/ubuntu
+        app_user_shell: /bin/bash
+
+    - name: Check if a reboot is required
+      ansible.builtin.shell: "[ -f /var/run/reboot-required ]"
+      failed_when: false
+      register: reboot_required
+      changed_when: reboot_required.rc == 0
+      notify:
+        - reboot
+      tags:
+        - system
+
+  handlers:
+
+    - name: reboot
+      ansible.builtin.reboot:
+        msg: Maintenance reboot initiated

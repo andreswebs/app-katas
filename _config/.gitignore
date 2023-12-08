@@ -1,5 +1,6 @@
 inventory/**
 !inventory/example.gcp.yml
+!inventory/example.aws_ec2.yml
 !inventory/hcloud.yml
 .env
 .envrc
