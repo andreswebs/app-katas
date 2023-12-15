@@ -1,6 +1,5 @@
 ---
-- src: andreswebs.docker_app
-
 collections:
   - name: hetzner.hcloud
   - name: amazon.aws
+  - name: google.cloud
