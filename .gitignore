@@ -5,3 +5,5 @@
 .envrc
 *.zip
 *bak*
+*.pem
+*.pw

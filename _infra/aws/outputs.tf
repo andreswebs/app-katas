@@ -1,5 +1,5 @@
 output "apps" {
   value = {
-    wordpress = module.wordpress.app_address
+    # wordpress = module.wordpress.app_address
   }
 }

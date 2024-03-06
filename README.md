@@ -40,17 +40,18 @@ Terraform and Ansible must be installed in the operator machine.
 Terraform and Ansible credentials must have been configured for the cloud
 provider of choice.
 
-Create an inventory file from `_config/inventory/example.gcp.yml` and set the
-GCP project ID.
+Create an inventory file from (for example, if using GCP)
+`_config/inventory/example.gcp.yml` and set the GCP project ID.
 
 Set up any needed environment variables for the app containers in
 `<app>/app/.env`, as in the example `whoami/app/.env.example`.
 
 (TODO: add more instructions)
 
-### **Create infra:**
+### **Create infra (example):**
 
-Individual app modules are instantiated in `_infra/gcp/main.tf`.
+Individual app modules are instantiated in (for example, GCP)
+`_infra/gcp/main.tf`.
 
 ```sh
 pushd ./_infra/gcp
@@ -60,13 +61,13 @@ terraform apply
 popd
 ```
 
-(Grab the Terraform outputs to configure DNS)
+(Grab the Terraform outputs to configure DN.)
 
 ### **DNS:**
 
 Add DNS records pointing to the instance IPs output in the previous step.
 
-### **Deploy docker app:**
+### **Deploy docker app (example):**
 
 Example:
 
