@@ -14,3 +14,8 @@ variable "ssh_key_name" {
 variable "cidr_whitelist" {
   type = list(string)
 }
+
+variable "rdp_enabled" {
+  type    = bool
+  default = false
+}

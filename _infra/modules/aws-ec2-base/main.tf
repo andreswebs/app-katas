@@ -8,31 +8,40 @@ resource "aws_security_group" "this" {
 
   revoke_rules_on_delete = true
 
-  ingress {
-    from_port   = 22
-    to_port     = 22
-    protocol    = "tcp"
-    cidr_blocks = var.cidr_whitelist
-  }
-
-  ingress {
-    from_port   = 3389
-    to_port     = 3389
-    protocol    = "tcp"
-    cidr_blocks = var.cidr_whitelist
-  }
-
-  egress {
-    from_port        = 0
-    to_port          = 0
-    protocol         = "-1"
-    cidr_blocks      = ["0.0.0.0/0"]
-    ipv6_cidr_blocks = ["::/0"]
-  }
-
   tags = {
     Name = var.name
   }
+}
+
+resource "aws_vpc_security_group_ingress_rule" "ssh" {
+  for_each = toset(var.cidr_whitelist)
+
+  security_group_id = aws_security_group.this.id
+
+  ip_protocol = "tcp"
+  from_port   = 22
+  to_port     = 22
+  cidr_ipv4   = each.value
+}
+
+resource "aws_vpc_security_group_ingress_rule" "rdp" {
+  for_each = toset([for cidr in var.cidr_whitelist : cidr if var.rdp_enabled])
+
+  security_group_id = aws_security_group.this.id
+
+  ip_protocol = "tcp"
+  from_port   = 3389
+  to_port     = 3389
+  cidr_ipv4   = each.value
+}
+
+resource "aws_vpc_security_group_egress_rule" "open" {
+  security_group_id = aws_security_group.this.id
+  ip_protocol       = "-1"
+  from_port         = "-1"
+  to_port           = "-1"
+  cidr_ipv4         = "0.0.0.0/0"
+  # cidr_ipv6         = "::/0"
 }
 
 module "ec2_keypair" {

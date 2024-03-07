@@ -3,6 +3,7 @@ module "ec2_base_01" {
   vpc_id         = var.vpc_id_01
   cidr_whitelist = var.cidr_whitelist
   name           = "test-01"
+  rdp_enabled    = false
 }
 
 module "ec2_instance_01" {
