@@ -1,6 +1,0 @@
----
-plugin: amazon.aws.aws_ec2
-
-keyed_groups:
-  - key: tags["Name"]
-    prefix: vm_tag

@@ -94,7 +94,7 @@ popd
 
 ```sh
 pushd ./_config
-./playbooks/hcloud-k3s.yml --inventory inventory/hcloud.yml
+./playbooks/k3s.yml --inventory inventory/hcloud.yml
 popd
 ```
 
