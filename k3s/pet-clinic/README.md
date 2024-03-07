@@ -102,6 +102,11 @@ Finally apply the updated manifest.
 
 Generate some load with the [`artificial-load.sh`](artificial-load.sh) script.
 
+```sh
+export API_URL="https://petclinic.example.com/petclinic/api"
+./artificial-load.sh
+```
+
 ## References
 
 <https://www.elastic.co/guide/en/fleet/current/running-on-kubernetes-managed-by-fleet.html>
