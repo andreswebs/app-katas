@@ -44,24 +44,28 @@ spec:
           volumeMounts:
             - mountPath: /elastic/apm/agent
               name: elastic-apm-agent
-          # env:
-          #   - name: ELASTIC_APM_SERVER_URL
-          #     value: "http://elastic-apm-apm-http.elasticsearch.svc.cluster.local:8200"
-          #   - name: ELASTIC_APM_SERVICE_NAME
-          #     value: "petclinic"
-          #   - name: ELASTIC_APM_APPLICATION_PACKAGES
-          #     value: "org.springframework.samples.petclinic"
-          #   - name: ELASTIC_APM_ENVIRONMENT
-          #     value: test
-          #   - name: ELASTIC_APM_LOG_LEVEL
-          #     value: DEBUG
-          #   - name: ELASTIC_APM_SECRET_TOKEN
-          #     valueFrom:
-          #       secretKeyRef:
-          #         name: elastic-apm-apm-token
-          #         key: secret-token
-          #   - name: JAVA_TOOL_OPTIONS
-          #     value: -javaagent:/elastic/apm/agent/elastic-apm-agent.jar
+          env:
+            - name: JAVA_TOOL_OPTIONS
+              value: -javaagent:/elastic/apm/agent/elastic-apm-agent.jar
+            - name: ELASTIC_APM_SERVICE_NAME
+              value: "petclinic"
+            - name: ELASTIC_APM_APPLICATION_PACKAGES
+              value: "org.springframework.samples.petclinic"
+            - name: ELASTIC_APM_ENVIRONMENT
+              value: test
+            - name: ELASTIC_APM_LOG_LEVEL
+              value: DEBUG
+            - name: ELASTIC_APM_SERVER_URL
+              valueFrom:
+                secretKeyRef:
+                  name: elastic-apm
+                  key: ELASTIC_APM_SERVER_URL
+            - name: ELASTIC_APM_SECRET_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: elastic-apm
+                  key: ELASTIC_APM_SECRET_TOKEN
+
 ---
 apiVersion: v1
 kind: Service
