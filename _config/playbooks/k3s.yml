@@ -4,6 +4,7 @@
 
   hosts:
     - k3s
+    - vm_tag_k3s
 
   vars:
     kube_config_remote: /etc/rancher/k3s/k3s.yaml
@@ -12,7 +13,6 @@
   become: yes
   become_user: root
   tasks:
-
     - name: Upgrade system
       ansible.builtin.apt:
         update_cache: yes
@@ -39,7 +39,6 @@
         - system
 
   handlers:
-
     - name: reboot
       ansible.builtin.reboot:
         msg: Maintenance reboot initiated
