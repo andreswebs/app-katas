@@ -1,8 +1,16 @@
 module "ec2_base_01" {
   source         = "../modules/aws-ec2-base/"
   vpc_id         = var.vpc_id_01
-  cidr_whitelist = var.cidr_whitelist
+  cidr_whitelist = var.cidr_whitelist_01
   name           = "k3s"
+
+  extra_ingress_rules = [
+    {
+      from_port = "6443"
+      to_port   = "6443"
+    }
+  ]
+
 }
 
 module "ec2_instance_01" {
@@ -21,9 +29,16 @@ output "ec2_instance_01_public_ip" {
 module "ec2_base_02" {
   source         = "../modules/aws-ec2-base/"
   vpc_id         = var.vpc_id_02
-  cidr_whitelist = var.cidr_whitelist
+  cidr_whitelist = var.cidr_whitelist_02
   name           = "data-poc"
-  rdp_enabled    = true
+
+  extra_ingress_rules = [
+    {
+      from_port = "3389"
+      to_port   = "3389"
+    }
+  ]
+
 }
 
 module "ec2_instance_02" {

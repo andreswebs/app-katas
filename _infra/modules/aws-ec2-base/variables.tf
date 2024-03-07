@@ -15,7 +15,12 @@ variable "cidr_whitelist" {
   type = list(string)
 }
 
-variable "rdp_enabled" {
-  type    = bool
-  default = false
+variable "extra_ingress_rules" {
+  type = list(object({
+    from_port   = string
+    to_port     = string
+    ip_protocol = optional(string, "tcp")
+  }))
+
+  default = []
 }

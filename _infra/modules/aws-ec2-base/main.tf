@@ -24,15 +24,24 @@ resource "aws_vpc_security_group_ingress_rule" "ssh" {
   cidr_ipv4   = each.value
 }
 
-resource "aws_vpc_security_group_ingress_rule" "rdp" {
-  for_each = toset([for cidr in var.cidr_whitelist : cidr if var.rdp_enabled])
+locals {
+  extra_ingress_rules = flatten([for rule in var.extra_ingress_rules : [for cidr in var.cidr_whitelist : {
+    from_port   = rule.from_port
+    to_port     = rule.to_port
+    ip_protocol = rule.ip_protocol
+    cidr_ipv4   = cidr
+  }]])
+}
+
+resource "aws_vpc_security_group_ingress_rule" "extra" {
+  for_each = { for rule in local.extra_ingress_rules : rule.cidr_ipv4 => rule }
 
   security_group_id = aws_security_group.this.id
 
-  ip_protocol = "tcp"
-  from_port   = 3389
-  to_port     = 3389
-  cidr_ipv4   = each.value
+  ip_protocol = each.value.ip_protocol
+  from_port   = each.value.from_port
+  to_port     = each.value.to_port
+  cidr_ipv4   = each.value.cidr_ipv4
 }
 
 resource "aws_vpc_security_group_egress_rule" "open" {
