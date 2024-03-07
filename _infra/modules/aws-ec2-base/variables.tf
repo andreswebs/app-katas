@@ -24,3 +24,8 @@ variable "extra_ingress_rules" {
 
   default = []
 }
+
+variable "allow_web_traffic" {
+  type    = bool
+  default = false
+}

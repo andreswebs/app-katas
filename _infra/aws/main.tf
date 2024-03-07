@@ -4,6 +4,8 @@ module "ec2_base_01" {
   cidr_whitelist = var.cidr_whitelist_01
   name           = "k3s"
 
+  allow_web_traffic = true
+
   extra_ingress_rules = [
     {
       from_port = "6443"

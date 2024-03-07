@@ -24,6 +24,28 @@ resource "aws_vpc_security_group_ingress_rule" "ssh" {
   cidr_ipv4   = each.value
 }
 
+resource "aws_vpc_security_group_ingress_rule" "http" {
+  count = var.allow_web_traffic ? 1 : 0
+
+  security_group_id = aws_security_group.this.id
+
+  ip_protocol = "tcp"
+  from_port   = 80
+  to_port     = 80
+  cidr_ipv4   = "0.0.0.0/0"
+}
+
+resource "aws_vpc_security_group_ingress_rule" "https" {
+  count = var.allow_web_traffic ? 1 : 0
+
+  security_group_id = aws_security_group.this.id
+
+  ip_protocol = "tcp"
+  from_port   = 443
+  to_port     = 443
+  cidr_ipv4   = "0.0.0.0/0"
+}
+
 locals {
   extra_ingress_rules = flatten([for rule in var.extra_ingress_rules : [for cidr in var.cidr_whitelist : {
     from_port   = rule.from_port
