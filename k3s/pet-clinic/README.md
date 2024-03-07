@@ -1,4 +1,4 @@
-# Elastic Agent on Spring Pet Clinic example app
+# Elastic Agent on Spring Pet Clinic - example
 
 ## Pre-requisites
 
@@ -97,6 +97,10 @@ And update the values in the application manifest:
 ```
 
 Finally apply the updated manifest.
+
+## Testing
+
+Generate some load with the [`artificial-load.sh`](artificial-load.sh) script.
 
 ## References
 
