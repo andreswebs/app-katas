@@ -6,7 +6,7 @@ module "ec2_base_01" {
 
   allow_web_traffic = true
 
-  extra_ingress_rules = [
+  extra_whitelisted_ingress_rules = [
     {
       from_port = "6443"
       to_port   = "6443"
@@ -34,7 +34,7 @@ module "ec2_base_02" {
   cidr_whitelist = var.cidr_whitelist_02
   name           = "data-poc"
 
-  extra_ingress_rules = [
+  extra_whitelisted_ingress_rules = [
     {
       from_port = "3389"
       to_port   = "3389"
