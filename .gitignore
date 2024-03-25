@@ -1,5 +1,6 @@
 **/data/*
 **/secrets/*
+
 .DS_Store
 .env
 .envrc

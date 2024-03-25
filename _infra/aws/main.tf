@@ -1,32 +1,32 @@
-module "ec2_base_01" {
-  source         = "../modules/aws-ec2-base/"
-  vpc_id         = var.vpc_id_01
-  cidr_whitelist = var.cidr_whitelist_01
-  name           = "k3s"
+# module "ec2_base_01" {
+#   source         = "../modules/aws-ec2-base/"
+#   vpc_id         = var.vpc_id_01
+#   cidr_whitelist = var.cidr_whitelist_01
+#   name           = "k3s"
 
-  allow_web_traffic = true
+#   allow_web_traffic = true
 
-  extra_whitelisted_ingress_rules = [
-    {
-      from_port = "6443"
-      to_port   = "6443"
-    }
-  ]
+#   extra_whitelisted_ingress_rules = [
+#     {
+#       from_port = "6443"
+#       to_port   = "6443"
+#     }
+#   ]
 
-}
+# }
 
-module "ec2_instance_01" {
-  source                 = "../modules/aws-ec2-instance-linux/"
-  subnet_id              = var.subnet_id_01
-  vpc_security_group_ids = [module.ec2_base_01.security_group.id]
-  ssh_key_name           = module.ec2_base_01.key_pair.key_name
-  iam_profile_name       = module.ec2_base_01.instance_profile.name
-  name                   = "k3s"
-}
+# module "ec2_instance_01" {
+#   source                 = "../modules/aws-ec2-instance-linux/"
+#   subnet_id              = var.subnet_id_01
+#   vpc_security_group_ids = [module.ec2_base_01.security_group.id]
+#   ssh_key_name           = module.ec2_base_01.key_pair.key_name
+#   iam_profile_name       = module.ec2_base_01.instance_profile.name
+#   name                   = "k3s"
+# }
 
-output "ec2_instance_01_public_ip" {
-  value = module.ec2_instance_01.public_ip
-}
+# output "ec2_instance_01_public_ip" {
+#   value = module.ec2_instance_01.public_ip
+# }
 
 module "ec2_base_02" {
   source         = "../modules/aws-ec2-base/"
