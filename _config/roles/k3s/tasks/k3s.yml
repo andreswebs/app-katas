@@ -1,4 +1,3 @@
-
 ---
 - name: Install k3s
   ansible.builtin.shell:
@@ -33,7 +32,7 @@
     replace: "https://{{ k3s_host.stdout }}:6443"
     backup: true
   delegate_to: localhost
-  become: no
+  become: false
   tags:
     - k3s-install
     - k3s-fetch-config
