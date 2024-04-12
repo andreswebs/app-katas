@@ -4,3 +4,5 @@ inventory/**
 !inventory/hcloud.yml
 .env
 .envrc
+
+k3s.tmp.yml
