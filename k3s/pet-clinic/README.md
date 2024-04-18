@@ -70,13 +70,18 @@ the APM integration page in Kibana:
 - `ELASTIC_APM_SERVER_URL`
 - `ELASTIC_APM_SECRET_TOKEN`
 
-Create a Kubernetes secret (note the namespace, it must be the same as the
-application):
+Create a Kubernetes secret (note the namespace, it must be on the application
+namespace):
 
 ```sh
-ELASTIC_APM_SERVER_URL="https://9876543210thisisanotherrandomvalue.apm.us-east-2.aws.elastic-cloud.com:443" # example
+# examples
+APP_NAMESPACE="app"
+ELASTIC_APM_SERVER_URL="https://9876543210thisisanotherrandomvalue.apm.us-east-2.aws.elastic-cloud.com:443"
 ELASTIC_APM_SECRET_TOKEN="inserttheAPMtokenhere"
-kubectl create secret generic --namespace default elastic-apm \
+```
+
+```sh
+kubectl create secret generic --namespace "${APP_NAMESPACE}" elastic-apm \
     --from-literal="ELASTIC_APM_SERVER_URL=${ELASTIC_APM_SERVER_URL}" \
     --from-literal="ELASTIC_APM_SECRET_TOKEN=${ELASTIC_APM_SECRET_TOKEN}"
 ```
