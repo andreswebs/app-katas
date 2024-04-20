@@ -25,7 +25,7 @@ spec:
           emptyDir: {}
       initContainers:
         - name: elastic-java-agent
-          image: docker.elastic.co/observability/apm-agent-java:1.12.0
+          image: docker.elastic.co/observability/apm-agent-java:1.48.1
           volumeMounts:
             - mountPath: /elastic/apm/agent
               name: elastic-apm-agent
@@ -48,13 +48,13 @@ spec:
             - name: JAVA_TOOL_OPTIONS
               value: -javaagent:/elastic/apm/agent/elastic-apm-agent.jar
             - name: ELASTIC_APM_SERVICE_NAME
-              value: "petclinic"
+              value: petclinic
             - name: ELASTIC_APM_APPLICATION_PACKAGES
-              value: "org.springframework.samples.petclinic"
+              value: org.springframework.samples.petclinic
             - name: ELASTIC_APM_ENVIRONMENT
-              value: test
+              value: dev
             - name: ELASTIC_APM_LOG_LEVEL
-              value: DEBUG
+              value: TRACE
             - name: ELASTIC_APM_SERVER_URL
               valueFrom:
                 secretKeyRef:
@@ -90,7 +90,7 @@ metadata:
   name: petclinic
   namespace: default
 spec:
-  ingressClassName: traefik
+  ingressClassName: nginx
   rules:
     - http:
         paths:

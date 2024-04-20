@@ -31,7 +31,7 @@ spec:
       dnsPolicy: ClusterFirstWithHostNet
       containers:
         - name: elastic-agent
-          image: docker.elastic.co/beats/elastic-agent:8.2.3
+          image: docker.elastic.co/beats/elastic-agent:8.13.2 ## set version according to the elasticsearch cluster
           env:
             # Set to 1 for enrollment into Fleet server. If not set, Elastic Agent is run in standalone mode
             - name: FLEET_ENROLL
@@ -72,25 +72,23 @@ spec:
             # The following ELASTIC_NETINFO:false variable will disable the netinfo.enabled option of add-host-metadata processor. This will remove fields host.ip and host.mac.
             # For more info: https://www.elastic.co/guide/en/beats/metricbeat/current/add-host-metadata.html
             - name: ELASTIC_NETINFO
-              value: "false"
+              value: "true"
           securityContext:
             runAsUser: 0
             # The following capabilities are needed for 'Defend for containers' integration (cloud-defend)
             # If you are using this integration, please uncomment these lines before applying.
-            #capabilities:
-            #  add:
-            #    - BPF # (since Linux 5.8) allows loading of BPF programs, create most map types, load BTF, iterate programs and maps.
-            #    - PERFMON # (since Linux 5.8) allows attaching of BPF programs used for performance metrics and observability operations.
-            #    - SYS_RESOURCE # Allow use of special resources or raising of resource limits. Used by 'Defend for Containers' to modify 'rlimit_memlock'
-            ########################################################################################
+            capabilities:
+              add:
+                - BPF # (since Linux 5.8) allows loading of BPF programs, create most map types, load BTF, iterate programs and maps.
+                - PERFMON # (since Linux 5.8) allows attaching of BPF programs used for performance metrics and observability operations.
+                - SYS_RESOURCE # Allow use of special resources or raising of resource limits. Used by 'Defend for Containers' to modify 'rlimit_memlock'
+                - SYS_ADMIN
+            #######################################################################################
             # The following capabilities are needed for Universal Profiling.
             # More fine graded capabilities are only available for newer Linux kernels.
             # If you are using the Universal Profiling integration, please uncomment these lines before applying.
-            #procMount: "Unmasked"
-            #privileged: true
-            #capabilities:
-            #  add:
-            #    - SYS_ADMIN
+            procMount: "Unmasked"
+            privileged: true
           resources:
             limits:
               memory: 700Mi
@@ -124,8 +122,8 @@ spec:
             - name: elastic-agent-state
               mountPath: /usr/share/elastic-agent/state
             # If you are using the Universal Profiling integration, please uncomment these lines before applying.
-            #- name: universal-profiling-cache
-            #  mountPath: /var/cache/Elastic
+            - name: universal-profiling-cache
+              mountPath: /var/cache/Elastic
       volumes:
         - name: proc
           hostPath:
@@ -168,10 +166,10 @@ spec:
             type: DirectoryOrCreate
         # Mount required for Universal Profiling.
         # If you are using the Universal Profiling integration, please uncomment these lines before applying.
-        #- name: universal-profiling-cache
-        #  hostPath:
-        #    path: /var/cache/Elastic
-        #    type: DirectoryOrCreate
+        - name: universal-profiling-cache
+          hostPath:
+            path: /var/cache/Elastic
+            type: DirectoryOrCreate
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
@@ -185,6 +183,7 @@ roleRef:
   kind: ClusterRole
   name: elastic-agent
   apiGroup: rbac.authorization.k8s.io
+
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
@@ -199,6 +198,7 @@ roleRef:
   kind: Role
   name: elastic-agent
   apiGroup: rbac.authorization.k8s.io
+
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
@@ -213,6 +213,7 @@ roleRef:
   kind: Role
   name: elastic-agent-kubeadm-config
   apiGroup: rbac.authorization.k8s.io
+
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
@@ -283,6 +284,7 @@ rules:
     resources:
       - storageclasses
     verbs: ["get", "list", "watch"]
+
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
@@ -298,6 +300,7 @@ rules:
     resources:
       - leases
     verbs: ["get", "create", "update"]
+
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
@@ -313,6 +316,7 @@ rules:
     resourceNames:
       - kubeadm-config
     verbs: ["get"]
+
 ---
 apiVersion: v1
 kind: ServiceAccount
@@ -321,5 +325,3 @@ metadata:
   namespace: kube-system
   labels:
     k8s-app: elastic-agent
----
-
