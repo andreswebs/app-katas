@@ -6,10 +6,6 @@
     - k3s
     - vm_tag_k3s
 
-  vars:
-    kube_config_remote: /etc/rancher/k3s/k3s.yaml
-    kube_config_local: /tmp/k3s.yaml
-
   become: true
   become_user: root
   tasks:
