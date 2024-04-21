@@ -91,7 +91,7 @@ spec:
             privileged: true
           resources:
             limits:
-              memory: 700Mi
+              memory: 2000Mi
             requests:
               cpu: 100m
               memory: 400Mi
