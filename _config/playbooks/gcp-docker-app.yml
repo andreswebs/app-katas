@@ -5,16 +5,15 @@
   hosts:
     - "vm_tag_{{ app }}"
 
-  become: yes
+  become: true
   become_user: root
   tasks:
-
     - name: Upgrade system
       ansible.builtin.apt:
-        update_cache: yes
+        update_cache: true
         upgrade: dist
-        autoremove: yes
-        autoclean: yes
+        autoremove: true
+        autoclean: true
       async: 3600
       poll: 5
       when: upgrade_system | default(false) | bool
@@ -47,7 +46,6 @@
         - system
 
   handlers:
-
     - name: reboot
       ansible.builtin.reboot:
         msg: Maintenance reboot initiated

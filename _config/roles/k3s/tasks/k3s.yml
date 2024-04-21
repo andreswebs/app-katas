@@ -3,6 +3,7 @@
   ansible.builtin.shell:
     cmd: curl -sfL https://get.k3s.io | INSTALL_K3S_EXEC="--tls-san {{ ansible_host }}" sh -s -
     creates: "{{ kube_config_remote }}"
+  when: k3s_install | default(true) | bool
   tags:
     - k3s-install
 
