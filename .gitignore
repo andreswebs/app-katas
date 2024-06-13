@@ -9,3 +9,4 @@
 *.pem
 *.pw
 k3s.kubeconfig.yaml
+k3s/**/charts/
