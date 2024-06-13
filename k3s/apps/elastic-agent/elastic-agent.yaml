@@ -54,13 +54,13 @@ spec:
                   name: elastic-agent-fleet-enrollment
                   key: FLEET_ENROLLMENT_TOKEN
             - name: KIBANA_HOST
-              value: "http://kibana:5601"
+              value: http://kibana:5601
             # The basic authentication username used to connect to Kibana and retrieve a service_token to enable Fleet
             - name: KIBANA_FLEET_USERNAME
-              value: "elastic"
+              value: elastic
             # The basic authentication password used to connect to Kibana and retrieve a service_token to enable Fleet
             - name: KIBANA_FLEET_PASSWORD
-              value: "changeme"
+              value: placeholder
             - name: NODE_NAME
               valueFrom:
                 fieldRef:
@@ -87,7 +87,7 @@ spec:
             # The following capabilities are needed for Universal Profiling.
             # More fine graded capabilities are only available for newer Linux kernels.
             # If you are using the Universal Profiling integration, please uncomment these lines before applying.
-            procMount: "Unmasked"
+            procMount: Unmasked
             privileged: true
           resources:
             limits:
@@ -234,56 +234,56 @@ rules:
       - serviceaccounts
       - persistentvolumes
       - persistentvolumeclaims
-    verbs: ["get", "list", "watch"]
+    verbs: [get, list, watch]
   # Enable this rule only if planing to use kubernetes_secrets provider
   #- apiGroups: [""]
   #  resources:
   #  - secrets
-  #  verbs: ["get"]
-  - apiGroups: ["extensions"]
+  #  verbs: [get]
+  - apiGroups: [extensions]
     resources:
       - replicasets
-    verbs: ["get", "list", "watch"]
-  - apiGroups: ["apps"]
+    verbs: [get, list, watch]
+  - apiGroups: [apps]
     resources:
       - statefulsets
       - deployments
       - replicasets
       - daemonsets
-    verbs: ["get", "list", "watch"]
+    verbs: [get, list, watch]
   - apiGroups:
       - ""
     resources:
       - nodes/stats
     verbs:
       - get
-  - apiGroups: ["batch"]
+  - apiGroups: [batch]
     resources:
       - jobs
       - cronjobs
-    verbs: ["get", "list", "watch"]
+    verbs: [get, list, watch]
   # Needed for apiserver
   - nonResourceURLs:
       - "/metrics"
     verbs:
       - get
   # Needed for cloudbeat
-  - apiGroups: ["rbac.authorization.k8s.io"]
+  - apiGroups: [rbac.authorization.k8s.io]
     resources:
       - clusterrolebindings
       - clusterroles
       - rolebindings
       - roles
-    verbs: ["get", "list", "watch"]
+    verbs: [get, list, watch]
   # Needed for cloudbeat
-  - apiGroups: ["policy"]
+  - apiGroups: [policy]
     resources:
       - podsecuritypolicies
-    verbs: ["get", "list", "watch"]
-  - apiGroups: ["storage.k8s.io"]
+    verbs: [get, list, watch]
+  - apiGroups: [storage.k8s.io]
     resources:
       - storageclasses
-    verbs: ["get", "list", "watch"]
+    verbs: [get, list, watch]
 
 ---
 apiVersion: rbac.authorization.k8s.io/v1
@@ -299,7 +299,7 @@ rules:
       - coordination.k8s.io
     resources:
       - leases
-    verbs: ["get", "create", "update"]
+    verbs: [get, create, update]
 
 ---
 apiVersion: rbac.authorization.k8s.io/v1
@@ -315,7 +315,7 @@ rules:
       - configmaps
     resourceNames:
       - kubeadm-config
-    verbs: ["get"]
+    verbs: [get]
 
 ---
 apiVersion: v1
