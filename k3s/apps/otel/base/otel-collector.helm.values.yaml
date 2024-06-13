@@ -1,0 +1,8 @@
+---
+fullnameOverride: otel-collector
+image:
+  repository: otel/opentelemetry-collector-k8s
+mode: daemonset
+serviceAccount:
+  create: false
+  name: otel-collector

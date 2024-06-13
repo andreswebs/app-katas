@@ -1,0 +1,26 @@
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: o11y
+
+resources:
+  - ../../base
+
+# https://github.com/kubernetes-sigs/kustomize/issues/4658#issuecomment-1951406289
+helmCharts:
+  - name: opentelemetry-collector
+    repo: https://open-telemetry.github.io/opentelemetry-helm-charts
+    version: 0.93.3
+    namespace: o11y
+    releaseName: otel-collector
+    valuesFile: ../../base/otel-collector.helm.values.yaml
+    additionalValuesFiles:
+      - otel-collector.helm.values.yaml
+  # - name: opentelemetry-operator
+  #   repo: https://open-telemetry.github.io/opentelemetry-helm-charts
+  #   version: 0.61.0
+  #   namespace: o11y
+  #   releaseName: otel-operator
+  #   valuesFile: ../../base/otel-operator.helm.values.yaml
+  #   additionalValuesFiles:
+  #     - otel-operator.helm.values.yaml
