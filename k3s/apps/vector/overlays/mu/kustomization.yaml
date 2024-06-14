@@ -1,0 +1,18 @@
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: o11y
+
+resources:
+  - ../../base
+
+# https://github.com/kubernetes-sigs/kustomize/issues/4658#issuecomment-1951406289
+helmCharts:
+  - name: vector
+    repo: https://helm.vector.dev
+    version: 0.33.0
+    namespace: o11y
+    releaseName: vector
+    valuesFile: ../../base/vector.helm.values.yaml
+    additionalValuesFiles:
+      - vector.helm.values.yaml

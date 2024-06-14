@@ -1,0 +1,108 @@
+# see:
+# https://vector.dev/docs/reference/configuration/template-syntax/
+---
+role: Agent
+
+serviceAccount:
+  create: true
+  name: vector
+
+service:
+  enabled: false
+
+serviceHeadless:
+  enabled: false
+
+containerPorts:
+  - containerPort: 8686
+    name: api
+    protocol: TCP
+
+env:
+  - name: VECTOR_LOG_FORMAT
+    value: json
+  - name: ELASTIC_URL
+    valueFrom:
+      secretKeyRef:
+        name: elastic
+        key: ELASTIC_URL
+  - name: ELASTIC_API_KEY
+    valueFrom:
+      secretKeyRef:
+        name: elastic
+        key: ELASTIC_API_KEY
+
+# see:
+# https://github.com/vectordotdev/helm-charts/issues/266#issuecomment-1908693194
+# securityContext:
+#   privileged: true
+# privileged: false
+# allowPrivilegeEscalation: false
+# capabilities:
+#   add:
+#     - CHOWN
+#   drop:
+#     - KILL
+#     - DAC_OVERRIDE
+#     - FOWNER
+#     - NET_BIND_SERVICE
+#     - FSETID
+#     - SETGID
+#     - SETUID
+#     - SETPCAP
+# seLinuxOptions:
+#   type: container_logwriter_t
+# seccompProfile:
+#   type: RuntimeDefault
+
+extraVolumes:
+  - name: vector-extra
+    emptyDir: {}
+
+extraVolumeMounts:
+  - name: vector-extra
+    mountPath: /var/local/lib/vector
+
+customConfig:
+  api:
+    enabled: true
+
+  sources:
+    # https://vector.dev/docs/reference/configuration/sources/kubernetes_logs/
+    kubernetes_logs:
+      type: kubernetes_logs
+      data_dir: /var/local/lib/vector
+
+    host_metrics:
+      type: host_metrics
+
+  sinks:
+    # stdout:
+    #   type: console
+    #   inputs:
+    #     - elastic
+    #   encoding:
+    #     charset: UTF-8
+    #     codec: json
+
+    # https://vector.dev/docs/reference/configuration/sinks/elasticsearch/
+    elastic:
+      type: elasticsearch
+      api_version: v8
+      inputs:
+        - kubernetes_logs
+        - host_metrics
+      endpoints:
+        - ${ELASTIC_URL}
+      request:
+        headers:
+          Authorization: ApiKey ${ELASTIC_API_KEY}
+      bulk:
+        action: create
+
+      mode: data_stream
+
+      # data_stream:
+      #   namespace: ${ELASTIC_NAMESPACE_PREFIX}-{{ type }}
+      #   type: "{{ type }}"
+      #   dataset: ${ELASTIC_DATASET}

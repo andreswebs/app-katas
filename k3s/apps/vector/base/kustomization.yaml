@@ -4,4 +4,3 @@ kind: Kustomization
 namespace: o11y
 resources:
   - o11y.ns.yaml
-  # - otel-collector.sa.yaml
