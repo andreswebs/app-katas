@@ -32,29 +32,6 @@ env:
         name: elastic
         key: ELASTIC_API_KEY
 
-# see:
-# https://github.com/vectordotdev/helm-charts/issues/266#issuecomment-1908693194
-# securityContext:
-#   privileged: true
-# privileged: false
-# allowPrivilegeEscalation: false
-# capabilities:
-#   add:
-#     - CHOWN
-#   drop:
-#     - KILL
-#     - DAC_OVERRIDE
-#     - FOWNER
-#     - NET_BIND_SERVICE
-#     - FSETID
-#     - SETGID
-#     - SETUID
-#     - SETPCAP
-# seLinuxOptions:
-#   type: container_logwriter_t
-# seccompProfile:
-#   type: RuntimeDefault
-
 extraVolumes:
   - name: vector-extra
     emptyDir: {}
@@ -77,13 +54,14 @@ customConfig:
       type: host_metrics
 
   sinks:
-    # stdout:
-    #   type: console
-    #   inputs:
-    #     - elastic
-    #   encoding:
-    #     charset: UTF-8
-    #     codec: json
+    stdout:
+      type: console
+      inputs:
+        - kubernetes_logs
+        - host_metrics
+      encoding:
+        charset: UTF-8
+        codec: json
 
     # https://vector.dev/docs/reference/configuration/sinks/elasticsearch/
     elastic:

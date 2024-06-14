@@ -1,7 +1,7 @@
 ---
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
-namespace: o11y
+namespace: vector
 
 resources:
   - ../../base
@@ -11,7 +11,7 @@ helmCharts:
   - name: vector
     repo: https://helm.vector.dev
     version: 0.33.0
-    namespace: o11y
+    namespace: vector
     releaseName: vector
     valuesFile: ../../base/vector.helm.values.yaml
     additionalValuesFiles:
