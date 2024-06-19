@@ -1,6 +1,6 @@
 module "ec2_base" {
   source         = "andreswebs/ec2-base/aws"
-  version        = "0.2.0"
+  version        = "0.2.1"
   vpc_id         = var.vpc_id
   cidr_whitelist = var.cidr_whitelist
   name           = "k3s"
@@ -18,12 +18,20 @@ module "ec2_base" {
 
 module "ec2_instance" {
   source                 = "andreswebs/ec2-instance-linux/aws"
-  version                = "0.2.0"
+  version                = "0.7.0"
   subnet_id              = var.subnet_id
   vpc_security_group_ids = [module.ec2_base.security_group.id]
   ssh_key_name           = module.ec2_base.key_pair.key_name
   iam_profile_name       = module.ec2_base.instance_profile.name
   name                   = "k3s"
+
+  extra_volumes = [
+    {
+      device_name = "/dev/sdf"
+      volume_size = 100
+      mount_path  = "/var/lib/rancher"
+    }
+  ]
 }
 
 locals {
