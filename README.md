@@ -74,7 +74,7 @@ Example:
 ```sh
 pushd ./_config
 ansible-galaxy install -r requirements.yml
-./playbooks/gcp-docker-app.yml -i inventory/yourinventory.gcp.yml -e upgrade_system=true -e app=whoami
+./playbooks/docker-app.gcp.yml -i inventory/yourinventory.gcp.yml -e upgrade_system=true -e app=whoami
 popd
 ```
 

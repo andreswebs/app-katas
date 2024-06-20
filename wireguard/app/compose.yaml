@@ -1,0 +1,35 @@
+# https://github.com/linuxserver/docker-wireguard
+---
+services:
+  app:
+    container_name: wireguard
+    image: lscr.io/linuxserver/wireguard:latest
+    restart: unless-stopped
+
+    cap_add:
+      - NET_ADMIN
+      - SYS_MODULE
+
+    sysctls:
+      - net.ipv4.conf.all.src_valid_mark=1
+      - net.ipv4.ip_forward=1
+      - net.ipv4.conf.all.proxy_arp=1
+
+    ports:
+      - 51820:51820/udp
+
+    volumes:
+      - /etc/wireguard:/config
+      - /lib/modules:/lib/modules
+
+    # https://github.com/linuxserver/docker-wireguard#parameters
+    environment:
+      - PUID=2000
+      - PGID=2000
+      - TZ=Etc/UTC
+      - LOG_CONFS=true
+      - INTERNAL_SUBNET=10.13.13.0 # only change if it clashes
+      - SERVERPORT=51820 # default
+      - SERVERURL # =wireguard.example.com
+      - PEERS
+      - ALLOWEDIPS # split tunneling: set this to only the IPs that will use the tunnel AND the WG server's ip, such as 10.13.13.1.
