@@ -3,14 +3,15 @@ variable "cidr_whitelist_ipv4" {
   default = []
 }
 
-variable "vpc_id" {
+variable "subnet_id" {
   type = string
 }
 
-variable "pub_subnet_id" {
+variable "name" {
   type = string
 }
 
-variable "prv_subnet_id" {
-  type = string
+variable "instance_type" {
+  type    = string
+  default = "t3a.small"
 }
