@@ -5,6 +5,9 @@ module "ec2_base" {
   cidr_whitelist_ipv4 = var.cidr_whitelist_ipv4
   name                = "wireguard"
 
+  create_ssh_key = true
+  allow_ssh      = true
+
   extra_whitelisted_ingress_rules = [
     {
       ip_protocol = "udp"
@@ -23,6 +26,7 @@ module "ec2_instance" {
   iam_profile_name       = module.ec2_base.instance_profile.name
   name                   = "wireguard"
 
+  ssh_key_name = module.ec2_base.key_pair.key_name
   app_username = "wireguard"
 
   associate_public_ip_address = true
