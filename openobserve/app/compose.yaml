@@ -1,0 +1,60 @@
+---
+name: openobserve
+
+networks:
+  app-net:
+    name: app-net
+
+services:
+  openobserve:
+    container_name: openobserve
+    image: public.ecr.aws/zinclabs/openobserve:latest
+    user: "2000"
+    restart: always
+    networks:
+      - app-net
+    volumes:
+      - /var/lib/openobserve/data:/data
+    environment:
+      - ZO_ROOT_USER_EMAIL
+      - ZO_ROOT_USER_PASSWORD
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.app.rule=Host(`${APP_HOST}`)"
+      - "traefik.http.routers.app.entrypoints=web"
+      - "traefik.http.routers.app.middlewares=redirect-https"
+      - "traefik.http.routers.app-secure.rule=Host(`${APP_HOST}`)"
+      - "traefik.http.routers.app-secure.entrypoints=web-secure"
+      - "traefik.http.routers.app-secure.service=app-secure"
+      - "traefik.http.routers.app-secure.tls=true"
+      - "traefik.http.routers.app-secure.tls.certresolver=letsencrypt"
+      - "traefik.http.services.app-secure.loadbalancer.server.port=5080"
+      - "traefik.http.middlewares.redirect-https.redirectscheme.scheme=https"
+      - "traefik.http.middlewares.redirect-https.redirectscheme.permanent=true"
+      - "traefik.docker.network=app-net"
+
+  traefik:
+    container_name: traefik
+    image: traefik:v2.9
+    restart: always
+    networks:
+      - app-net
+    command:
+      - --providers.docker
+      - --entrypoints.web.address=:80
+      - --entrypoints.web-secure.address=:443
+      - --certificatesresolvers.letsencrypt.acme.email=${LETSENCRYPT_EMAIL}
+      - --certificatesresolvers.letsencrypt.acme.storage=/letsencrypt/acme.json
+      - --certificatesresolvers.letsencrypt.acme.tlschallenge=true
+    ports:
+      - target: 80
+        published: 80
+        protocol: tcp
+        mode: host
+      - target: 443
+        published: 443
+        protocol: tcp
+        mode: host
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - /etc/letsencrypt:/letsencrypt
