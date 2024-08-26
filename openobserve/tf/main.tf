@@ -4,24 +4,20 @@ data "aws_subnet" "this" {
 
 module "ec2_base" {
   source              = "andreswebs/ec2-base/aws"
-  version             = "0.3.0"
+  version             = "0.5.0"
   vpc_id              = data.aws_subnet.this.vpc_id
   cidr_whitelist_ipv4 = var.cidr_whitelist_ipv4
   name                = "openobserve"
 
-  create_ssh_key = false
-  allow_ssh      = false
+  allow_public_web_traffic = true
 
-  allow_web_traffic = true
-
-  # extra_ingress_rules = [
-  #   {
-  #     ip_protocol = "udp"
-  #     from_port   = "51820"
-  #     to_port     = "51820"
-  #     cidr_ipv4   = "0.0.0.0/0"
-  #   }
-  # ]
+  extra_ingress_rules_ipv4 = [
+    {
+      from_port = "5081"
+      to_port   = "5081"
+      cidr_ipv4 = "0.0.0.0/0"
+    }
+  ]
 
 }
 
@@ -33,19 +29,18 @@ module "ec2_instance" {
   iam_profile_name       = module.ec2_base.instance_profile.name
   name                   = "openobserve"
 
-  # ssh_key_name = module.ec2_base.key_pair.key_name
   app_username = "openobserve"
   app_uid      = 2000
   app_gid      = 2000
 
   associate_public_ip_address = true
 
-  instance_type = "t3a.small"
+  instance_type = "m7a.xlarge"
 
   extra_volumes = [
     {
       device_name = "/dev/sdf"
-      size        = 5
+      size        = 100
       mount_path  = "/var/lib/openobserve"
       uid         = 2000
       gid         = 2000
