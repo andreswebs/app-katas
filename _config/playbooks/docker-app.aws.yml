@@ -26,12 +26,6 @@
         app_name: "{{ app }}"
         app_src: "{{ playbook_dir }}/../../{{ app }}/app/"
         app_dest: "/opt/{{ app }}"
-        app_uid: 1000
-        app_gid: 1000
-        app_user: ubuntu
-        app_group: ubuntu
-        app_home: /home/ubuntu
-        app_user_shell: /bin/bash
 
     - name: Check if a reboot is required
       ansible.builtin.shell: "[ -f /var/run/reboot-required ]"

@@ -111,6 +111,43 @@ terraform destroy
 popd
 ```
 
+## Example: AWS w/ SSM session manager plugin
+
+`.envrc`:
+
+```sh
+export APP_NAME="example"
+export X_TAG="vm_tag_${APP_NAME}"
+export X_AWS_SSM_BUCKET_NAME="example-bucket"
+```
+
+Ping:
+
+```sh
+pushd ./_config
+
+ansible "${X_TAG}" --inventory ./inventory/aws_ec2.yml -m ping \
+  --extra-vars "ansible_connection=aws_ssm" \
+  --extra-vars "ansible_aws_ssm_region=${AWS_REGION}" \
+  --extra-vars "ansible_aws_ssm_bucket_name=${X_AWS_SSM_BUCKET_NAME}"
+
+popd
+```
+
+Deploy:
+
+```sh
+pushd ./_config
+
+./playbooks/docker-app.aws.yml --inventory inventory/aws_ec2.yml \
+  --extra-vars "app=${APP_NAME}" \
+  --extra-vars "ansible_connection=aws_ssm" \
+  --extra-vars "ansible_aws_ssm_region=${AWS_REGION}" \
+  --extra-vars "ansible_aws_ssm_bucket_name=${X_AWS_SSM_BUCKET_NAME}"
+
+popd
+```
+
 ## Authors
 
 **Andre Silva** - [@andreswebs](https://github.com/andreswebs)
