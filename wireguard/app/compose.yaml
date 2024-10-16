@@ -32,4 +32,4 @@ services:
       - SERVERPORT=51820 # default
       - SERVERURL # =wireguard.example.com
       - PEERS
-      - ALLOWEDIPS # split tunneling: set this to only the IPs that will use the tunnel AND the WG server's ip, such as 10.13.13.1.
+      - ALLOWEDIPS # split tunneling: set this to only the IPs that will use the tunnel AND the WG server's ip; use 0.0.0.0/0 for public VPN server
