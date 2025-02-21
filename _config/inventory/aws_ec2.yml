@@ -1,10 +1,10 @@
 ---
 plugin: amazon.aws.aws_ec2
 
-profile: "{{ lookup('env', 'AWS_PROFILE') | default('default', true) }}"
-
 regions:
+  - us-east-1
   - us-east-2
+  - eu-west-1
 
 keyed_groups:
   - key: tags["Name"]
@@ -12,9 +12,6 @@ keyed_groups:
 
 filters:
   instance-state-name: running
-
-# compose:
-#   ansible_host: public_ip_address
 
 use_contrib_script_compatible_ec2_tag_keys: true
 

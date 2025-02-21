@@ -61,7 +61,7 @@ terraform apply
 popd
 ```
 
-(Grab the Terraform outputs to configure DN.)
+(Grab the Terraform outputs to configure DNS.)
 
 ### **DNS:**
 
