@@ -6,8 +6,9 @@ services:
     hostname: cloudflare-tunnel
     restart: unless-stopped
     network_mode: host
-    command: tunnel run
+    command: tunnel --no-autoupdate run ${TUNNEL_ID}
     environment:
+      - TUNNEL_ID
       - TUNNEL_TOKEN
     healthcheck:
       test: ["CMD", "cloudflared", "--version"]
