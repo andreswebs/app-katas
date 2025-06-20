@@ -1,0 +1,19 @@
+#!/usr/bin/env sh
+
+set -o nounset
+set -o errexit
+
+MODEL="nomic-embed-text"
+TXT_PROMPT="${1}"
+
+API_URL="http://localhost:11434/api/embeddings"
+
+# shellcheck disable=SC2089
+JSON_PROMPT='
+{
+  "model": "'${MODEL}'",
+  "prompt": "'${TXT_PROMPT}'"
+}
+'
+
+curl --fail --silent "${API_URL}" -d "${JSON_PROMPT}"

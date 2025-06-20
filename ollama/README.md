@@ -33,7 +33,7 @@ JSON_PROMPT='
 ```
 
 ```sh
-curl localhost:11434/api/generate -d "${JSON_PROMPT}"
+curl --fail --silent localhost:11434/api/generate -d "${JSON_PROMPT}"
 ```
 
 or for embeddings:
@@ -48,5 +48,5 @@ JSON_PROMPT='
 ```
 
 ```sh
-curl http://localhost:11434/api/embeddings -d "${JSON_PROMPT}"
+curl --fail --silent http://localhost:11434/api/embeddings -d "${JSON_PROMPT}"
 ```
