@@ -6,7 +6,13 @@ services:
     restart: unless-stopped
     environment:
       - QDRANT_DIR
+      - QDRANT__LOG_LEVEL
+      - QDRANT__SERVICE__API_KEY
+      - QDRANT__SERVICE__ENABLE_TLS
+      - QDRANT__TLS__KEY
+      - QDRANT__TLS__CERT
     ports:
       - 6333:6333
     volumes:
-      - "${QDRANT_DIR}/storage:/qdrant/storage:z"
+      - "${QDRANT_STORAGE_DIR}:/qdrant/storage:z"
+      - "${QDRANT_TLS_SRC_DIR}:${QDRANT_TLS_DST_DIR}"
