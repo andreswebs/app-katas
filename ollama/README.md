@@ -3,7 +3,7 @@ Examples:
 1. Choose a model
 
 ```sh
-MODEL="phi3.5"
+MODEL="deepseek-r1:1.5b"
 ```
 
 ```sh
