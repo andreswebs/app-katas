@@ -1,3 +1,13 @@
+Start `ollama`:
+
+```sh
+export OLLAMA_DIR="${HOME}/.ollama"
+```
+
+```sh
+docker compose up -d
+```
+
 Examples:
 
 1. Choose a model
