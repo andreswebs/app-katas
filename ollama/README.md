@@ -26,7 +26,7 @@ MODEL="nomic-embed-text"
 2. Pull
 
 ```sh
-docker exec -it ollama ollama pull "${MODEL}"
+docker exec --interactive --tty ollama ollama pull "${MODEL}"
 ```
 
 3. Access
@@ -44,7 +44,7 @@ JSON_PROMPT='
 ```
 
 ```sh
-curl --fail --silent localhost:11434/api/generate -d "${JSON_PROMPT}"
+curl --fail --silent --data "${JSON_PROMPT}" http://localhost:11434/api/generate
 ```
 
 or for embeddings:
@@ -59,5 +59,5 @@ JSON_PROMPT='
 ```
 
 ```sh
-curl --fail --silent http://localhost:11434/api/embeddings -d "${JSON_PROMPT}"
+curl --fail --silent --data "${JSON_PROMPT}" http://localhost:11434/api/embeddings
 ```
