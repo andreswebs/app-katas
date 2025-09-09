@@ -5,4 +5,4 @@ inventory/**
 .env
 .envrc
 
-k3s.tmp.yml
+*.tmp.yml

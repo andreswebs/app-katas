@@ -14,7 +14,7 @@ services:
       - ${LOCAL_SERVER_DATA_DIR}:/app/packages/twenty-server/.local-storage
 
     ports:
-      - "${SERVER_PORT:-3000}:${NODE_PORT}"
+      - ${SERVER_PORT:-3000}:${NODE_PORT}
 
     environment:
       - NODE_PORT

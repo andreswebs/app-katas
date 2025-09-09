@@ -11,10 +11,10 @@ services:
       - POSTGRES_PASSWORD
 
     volumes:
-      - "${LOCAL_DB_DATA_DIR}:${POSTGRES_DATA_DIR}"
+      - ${LOCAL_DB_DATA_DIR}:${POSTGRES_DATA_DIR}
 
     ports:
-      - "${POSTGRES_PORT}:5432"
+      - ${POSTGRES_PORT}:5432
 
     healthcheck:
       test: pg_isready -U ${POSTGRES_USER} -h localhost -d ${POSTGRES_DB}

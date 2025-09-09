@@ -3,3 +3,7 @@ collections:
   - name: hetzner.hcloud
   - name: amazon.aws
   - name: google.cloud
+
+roles:
+  - name: andreswebs.docker
+  - name: andreswebs.docker_app

@@ -1,0 +1,24 @@
+---
+name: whoami
+
+networks:
+  proxy:
+    name: proxy
+    external: true
+
+services:
+  whoami:
+    image: traefik/whoami
+    container_name: whoami
+    restart: unless-stopped
+    networks:
+      - proxy
+    labels:
+      - traefik.enable=true
+      - traefik.docker.network=proxy
+      - traefik.http.routers.whoami.rule=Host(`${APP_HOST}`)
+      - traefik.http.routers.whoami.entrypoints=websecure
+      - traefik.http.routers.whoami.service=whoami
+      - traefik.http.routers.whoami.tls=true
+      - traefik.http.routers.whoami.tls.certresolver=letsencrypt
+      - traefik.http.services.whoami.loadbalancer.server.port=${APP_PORT}

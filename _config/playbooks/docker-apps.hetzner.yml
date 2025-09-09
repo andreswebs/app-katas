@@ -1,0 +1,55 @@
+#!/usr/bin/env ansible-playbook
+---
+- name: Apps
+
+  become: true
+  become_user: root
+
+  hosts:
+    - "{{ lookup('env', 'HETZNER_APP_SERVER') }}"
+
+  tasks:
+    - name: Upgrade system
+      ansible.builtin.apt:
+        update_cache: true
+        upgrade: dist
+        autoremove: true
+        autoclean: true
+      async: 3600
+      poll: 5
+      when: upgrade_system | default(false) | bool
+      tags:
+        - system
+
+    - name: Install traefik
+      ansible.builtin.import_role:
+        name: andreswebs.docker_app
+      vars:
+        app_name: traefik
+        app_src: "{{ playbook_dir }}/../../traefik/"
+        app_uid: 2020
+        app_gid: 2020
+
+    - name: Install whoami
+      ansible.builtin.import_role:
+        name: andreswebs.docker_app
+      vars:
+        app_name: whoami
+        app_src: "{{ playbook_dir }}/../../whoami/"
+        app_uid: 2022
+        app_gid: 2022
+
+    - name: Check if a reboot is required
+      ansible.builtin.shell: "[ -f /var/run/reboot-required ]"
+      failed_when: false
+      register: reboot_required
+      changed_when: reboot_required.rc == 0
+      notify:
+        - reboot
+      tags:
+        - system
+
+  handlers:
+    - name: reboot
+      ansible.builtin.reboot:
+        msg: Maintenance reboot initiated
