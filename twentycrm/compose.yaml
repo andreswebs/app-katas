@@ -4,10 +4,13 @@ name: twentycrm
 networks:
   db:
     name: twentycrm-db
+  proxy:
+    name: proxy
+    external: true
 
 services:
   server:
-    image: twentycrm/twenty:${TAG:-latest}
+    image: twentycrm/twenty:${TWENTYCRM_VERSION:-latest}
     restart: always
 
     volumes:
@@ -19,6 +22,8 @@ services:
     environment:
       - NODE_PORT
 
+      - APP_SECRET
+
       - SERVER_URL
       - PG_DATABASE_URL
       - REDIS_URL
@@ -27,11 +32,11 @@ services:
       - DISABLE_CRON_JOBS_REGISTRATION
 
       - STORAGE_TYPE
-      - STORAGE_S3_REGION
       - STORAGE_S3_NAME
+      - STORAGE_S3_REGION
       - STORAGE_S3_ENDPOINT
-
-      - APP_SECRET
+      - STORAGE_S3_ACCESS_KEY_ID
+      - STORAGE_S3_SECRET_ACCESS_KEY
 
     healthcheck:
       test: curl --fail http://localhost:${NODE_PORT}/healthz
@@ -41,13 +46,24 @@ services:
 
     networks:
       - db
+      - proxy
 
-    depends_on:
-      db:
-        condition: service_healthy
+    labels:
+      - traefik.enable=true
+      - traefik.docker.network=proxy
+      - traefik.http.routers.twentycrm.rule=Host(`${TWENTYCRM_HOST}`)
+      - traefik.http.routers.twentycrm.entrypoints=websecure
+      - traefik.http.routers.twentycrm.service=twentycrm
+      - traefik.http.routers.twentycrm.tls=true
+      - traefik.http.routers.twentycrm.tls.certresolver=letsencrypt
+      - traefik.http.services.twentycrm.loadbalancer.server.port=${SERVER_PORT}
+
+    # depends_on:
+    #   db:
+    #     condition: service_healthy
 
   worker:
-    image: twentycrm/twenty:${TAG:-latest}
+    image: twentycrm/twenty:${TWENTYCRM_VERSION:-latest}
     restart: always
     command: ["yarn", "worker:prod"]
 
@@ -55,6 +71,8 @@ services:
       - ${LOCAL_SERVER_DATA_DIR}:/app/packages/twenty-server/.local-storage
 
     environment:
+      - APP_SECRET
+
       - SERVER_URL
       - PG_DATABASE_URL
       - REDIS_URL
@@ -63,42 +81,42 @@ services:
       - DISABLE_CRON_JOBS_REGISTRATION="true" # it already runs on the server
 
       - STORAGE_TYPE
-      - STORAGE_S3_REGION
       - STORAGE_S3_NAME
+      - STORAGE_S3_REGION
       - STORAGE_S3_ENDPOINT
-
-      - APP_SECRET
+      - STORAGE_S3_ACCESS_KEY_ID
+      - STORAGE_S3_SECRET_ACCESS_KEY
 
     networks:
       - db
 
     depends_on:
-      db:
-        condition: service_healthy
+      # db:
+      #   condition: service_healthy
       server:
         condition: service_healthy
 
-  db:
-    image: postgres:16
-    restart: always
+  # db:
+  #   image: postgres:16
+  #   restart: always
 
-    environment:
-      - PGDATA
-      - POSTGRES_DB
-      - POSTGRES_USER
-      - POSTGRES_PASSWORD
+  #   environment:
+  #     - PGDATA
+  #     - POSTGRES_DB
+  #     - POSTGRES_USER
+  #     - POSTGRES_PASSWORD
 
-    volumes:
-      - ${LOCAL_DB_DATA_DIR}:${POSTGRES_DATA_DIR}
+  #   volumes:
+  #     - ${LOCAL_DB_DATA_DIR}:${POSTGRES_DATA_DIR}
 
-    healthcheck:
-      test: pg_isready -U ${POSTGRES_USER} -h localhost -d ${POSTGRES_DB}
-      timeout: 5s
-      interval: 5s
-      retries: 10
+  #   healthcheck:
+  #     test: pg_isready -U ${POSTGRES_USER} -h localhost -d ${POSTGRES_DB}
+  #     timeout: 5s
+  #     interval: 5s
+  #     retries: 10
 
-    networks:
-      - db
+  #   networks:
+  #     - db
 
   redis:
     image: redis

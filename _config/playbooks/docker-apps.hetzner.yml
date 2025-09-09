@@ -39,6 +39,15 @@
         app_uid: 2022
         app_gid: 2022
 
+    - name: Install twentycrm
+      ansible.builtin.import_role:
+        name: andreswebs.docker_app
+      vars:
+        app_name: twentycrm
+        app_src: "{{ playbook_dir }}/../../twentycrm/"
+        app_uid: 2002
+        app_gid: 2002
+
     - name: Check if a reboot is required
       ansible.builtin.shell: "[ -f /var/run/reboot-required ]"
       failed_when: false
