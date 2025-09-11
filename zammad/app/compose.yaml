@@ -1,0 +1,143 @@
+---
+x-shared:
+  zammad-service: &zammad-service
+    environment:
+      - RAILS_TRUSTED_PROXIES
+      - REDIS_URL=${REDIS_URL:-redis://zammad-redis:6379}
+      - MEMCACHE_SERVERS=${MEMCACHE_SERVERS:-zammad-memcached:11211}
+
+      - ZAMMAD_HTTP_TYPE
+      - ZAMMAD_FQDN
+      - ZAMMAD_WEB_CONCURRENCY
+      - ZAMMAD_PROCESS_SESSIONS_JOBS_WORKERS
+      - ZAMMAD_PROCESS_SCHEDULED_JOBS_WORKERS
+      - ZAMMAD_PROCESS_DELAYED_JOBS_WORKERS
+
+      - AUTOWIZARD_JSON
+      - AUTOWIZARD_RELATIVE_PATH
+
+      - S3_URL
+      - BACKUP_DIR=${BACKUP_DIR:-/var/tmp/zammad}
+      - BACKUP_TIME=${BACKUP_TIME:-03:00}
+      - HOLD_DAYS=${HOLD_DAYS:-10}
+      - FULL_FS_DUMP
+      - TZ=${TZ:-Etc/UTC}
+
+      - POSTGRESQL_DB
+      - POSTGRESQL_HOST
+      - POSTGRESQL_USER
+      - POSTGRESQL_PASS
+      - POSTGRESQL_PORT
+      - POSTGRESQL_OPTIONS=${POSTGRESQL_OPTIONS:-?pool=50}
+      - POSTGRESQL_DB_CREATE
+
+      - ELASTICSEARCH_ENABLED
+      - ELASTICSEARCH_SCHEMA
+      - ELASTICSEARCH_HOST
+      - ELASTICSEARCH_PORT
+      - ELASTICSEARCH_USER
+      - ELASTICSEARCH_PASS
+      - ELASTICSEARCH_NAMESPACE
+      - ELASTICSEARCH_SSL_VERIFY
+      - ELASTICSEARCH_REINDEX
+
+    image: ${IMAGE_REPO:-ghcr.io/zammad/zammad}:${VERSION:-stable}
+
+networks:
+  backend:
+    name: zammad-backend
+  proxy:
+    name: proxy
+    external: true
+
+services:
+  zammad-memcached:
+    image: memcached:${MEMCACHE_VERSION:-1.6.39-alpine}
+    container_name: zammad-memcached
+    restart: always
+    command: memcached -m 256M
+    networks:
+      - backend
+
+  zammad-redis:
+    image: redis:${REDIS_VERSION:-7.4.5-alpine}
+    container_name: zammad-redis
+    restart: always
+    volumes:
+      - ${REDIS_DATA_DIR:-/var/lib/zammad/redis-data}:/data
+    networks:
+      - backend
+    healthcheck:
+      test: [CMD, redis-cli, ping]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 5s
+
+  zammad-init:
+    <<: *zammad-service
+    container_name: zammad-init
+    restart: on-failure
+    command: [zammad-init]
+    volumes:
+      - ${ZAMMAD_STORAGE_DIR:-/var/lib/zammad/storage}:/opt/zammad/storage
+    user: 0:0
+    networks:
+      - backend
+    depends_on:
+      zammad-redis:
+        condition: service_healthy
+      zammad-memcached:
+        condition: service_started
+
+  zammad-backup:
+    <<: *zammad-service
+    container_name: zammad-backup
+    restart: always
+    command: [zammad-backup]
+    volumes:
+      - ${ZAMMAD_STORAGE_DIR:-/var/lib/zammad/storage}:/opt/zammad/storage:ro
+      - ${ZAMMAD_BACKUP_DIR:-/var/lib/zammad/backup}:/var/tmp/zammad
+    user: 0:0
+    networks:
+      - backend
+    depends_on:
+      zammad-init:
+        condition: service_completed_successfully
+
+  zammad-railsserver:
+    <<: *zammad-service
+    container_name: zammad-railsserver
+    restart: always
+    command: [zammad-railsserver]
+    volumes:
+      - ${ZAMMAD_STORAGE_DIR:-/var/lib/zammad/storage}:/opt/zammad/storage
+    networks:
+      - backend
+    depends_on:
+      zammad-init:
+        condition: service_completed_successfully
+
+  zammad-scheduler:
+    <<: *zammad-service
+    container_name: zammad-scheduler
+    command: [zammad-scheduler]
+    volumes:
+      - ${ZAMMAD_STORAGE_DIR:-/var/lib/zammad/storage}:/opt/zammad/storage
+    networks:
+      - backend
+    depends_on:
+      zammad-init:
+        condition: service_completed_successfully
+
+  zammad-websocket:
+    <<: *zammad-service
+    container_name: zammad-websocket
+    command: [zammad-websocket]
+    volumes:
+      - ${ZAMMAD_STORAGE_DIR:-/var/lib/zammad/storage}:/opt/zammad/storage
+    networks:
+      - backend
+    depends_on:
+      zammad-init:
+        condition: service_completed_successfully

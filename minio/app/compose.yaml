@@ -1,12 +1,13 @@
 ---
 name: minio
 
+# TODO: traefik
+
 networks:
   web:
     name: minio-web
 
 services:
-
   minio:
     container_name: minio
     image: quay.io/minio/minio
@@ -32,33 +33,8 @@ services:
       - X_MINIO_PORT_CONSOLE
       - X_MINIO_PORT_API
     healthcheck:
-      test: [ CMD, curl, -f, "http://localhost:${X_MINIO_POR_API}/minio/health/live" ]
+      test:
+        [CMD, curl, -f, "http://localhost:${X_MINIO_POR_API}/minio/health/live"]
       interval: 30s
       timeout: 20s
       retries: 3
-
-  traefik:
-    container_name: traefik
-    image: traefik:v2.9
-    restart: always
-    networks:
-      - web
-    command:
-      - --providers.docker
-      - --entrypoints.web.address=:80
-      - --entrypoints.web-secure.address=:443
-      - --certificatesresolvers.letsencrypt.acme.email=${LETSENCRYPT_EMAIL}
-      - --certificatesresolvers.letsencrypt.acme.storage=/letsencrypt/acme.json
-      - --certificatesresolvers.letsencrypt.acme.tlschallenge=true
-    ports:
-      - target: 80
-        published: 80
-        protocol: tcp
-        mode: host
-      - target: 443
-        published: 443
-        protocol: tcp
-        mode: host
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock:ro
-      - /etc/letsencrypt:/letsencrypt

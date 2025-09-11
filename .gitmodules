@@ -1,6 +1,0 @@
-[submodule "_infra/modules/aws-ec2-base"]
-	path = _infra/modules/aws-ec2-base
-	url = git@github.com:andreswebs/terraform-aws-ec2-base.git
-[submodule "_infra/modules/aws-ec2-instance-linux"]
-	path = _infra/modules/aws-ec2-instance-linux
-	url = git@github.com:andreswebs/terraform-aws-ec2-instance-linux.git
