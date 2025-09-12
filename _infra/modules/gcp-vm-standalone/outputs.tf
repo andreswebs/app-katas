@@ -1,6 +1,11 @@
-output "app_address" {
-  value = {
-    (local.app_hostname) = local.app_ip_external
-  }
+output "hostname" {
+  value = module.vm.hostname
 }
 
+output "external_ip" {
+  value = module.vm.external_ip
+}
+
+output "internal_ip" {
+  value = module.vm.internal_ip
+}

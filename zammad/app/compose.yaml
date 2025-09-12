@@ -20,7 +20,7 @@ x-shared:
       - BACKUP_DIR=${BACKUP_DIR:-/var/tmp/zammad}
       - BACKUP_TIME=${BACKUP_TIME:-03:00}
       - HOLD_DAYS=${HOLD_DAYS:-10}
-      - FULL_FS_DUMP
+      - FULL_FS_DUMP=${FULL_FS_DUMP:-no}
       - TZ=${TZ:-Etc/UTC}
 
       - POSTGRESQL_DB
@@ -31,15 +31,15 @@ x-shared:
       - POSTGRESQL_OPTIONS=${POSTGRESQL_OPTIONS:-?pool=50}
       - POSTGRESQL_DB_CREATE
 
-      - ELASTICSEARCH_ENABLED
-      - ELASTICSEARCH_SCHEMA
-      - ELASTICSEARCH_HOST
-      - ELASTICSEARCH_PORT
+      - ELASTICSEARCH_ENABLED=${ELASTICSEARCH_ENABLED:-true}
+      - ELASTICSEARCH_SSL_VERIFY=${ELASTICSEARCH_SSL_VERIFY:-true}
+      - ELASTICSEARCH_REINDEX=${ELASTICSEARCH_REINDEX:-false}
+      - ELASTICSEARCH_SCHEMA=${ELASTICSEARCH_SCHEMA:-http}
+      - ELASTICSEARCH_HOST=${ELASTICSEARCH_HOST:-zammad-elasticsearch}
+      - ELASTICSEARCH_PORT=${ELASTICSEARCH_PORT:-9200}
+      - ELASTICSEARCH_NAMESPACE=${ELASTICSEARCH_NAMESPACE:-zammad}
       - ELASTICSEARCH_USER
       - ELASTICSEARCH_PASS
-      - ELASTICSEARCH_NAMESPACE
-      - ELASTICSEARCH_SSL_VERIFY
-      - ELASTICSEARCH_REINDEX
 
     image: ${IMAGE_REPO:-ghcr.io/zammad/zammad}:${VERSION:-stable}
 
@@ -84,6 +84,35 @@ services:
       retries: 3
       start_period: 5s
 
+  zammad-elasticsearch:
+    image: elasticsearch:${ELASTICSEARCH_VERSION:-8.19.2}
+    container_name: zammad-elasticsearch
+    restart: always
+    volumes:
+      - ${ELASTICSEARCH_DATA_DIR:-/var/lib/zammad/elasticsearch-data}:/usr/share/elasticsearch/data
+    networks:
+      - backend
+    healthcheck:
+      test:
+        [
+          CMD,
+          curl,
+          --write-out,
+          "HTTP %{http_code}",
+          --fail,
+          --silent,
+          --output,
+          /dev/null,
+          http://localhost:9200/,
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 50
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - ES_JAVA_OPTS=${ELASTICSEARCH_JAVA_OPTS:--Xms1g -Xmx1g}
+
   zammad-init:
     <<: *zammad-service
     container_name: zammad-init
@@ -95,15 +124,18 @@ services:
     networks:
       - backend
     depends_on:
-      zammad-redis:
-        condition: service_healthy
       zammad-memcached:
         condition: service_started
+      zammad-redis:
+        condition: service_healthy
+      zammad-elasticsearch:
+        condition: service_healthy
 
   zammad-backup:
     <<: *zammad-service
     container_name: zammad-backup
     restart: always
+    profiles: [backup]
     command: [zammad-backup]
     volumes:
       - ${ZAMMAD_STORAGE_DIR:-/var/lib/zammad/storage}:/opt/zammad/storage:ro

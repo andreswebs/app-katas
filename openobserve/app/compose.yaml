@@ -1,11 +1,10 @@
 ---
 name: openobserve
 
-# TODO: traefik
-
 networks:
-  app-net:
-    name: app-net
+  proxy:
+    name: proxy
+    external: true
 
 services:
   openobserve:
@@ -14,9 +13,9 @@ services:
     user: "2000"
     restart: always
     networks:
-      - app-net
+      - proxy
     volumes:
-      - /var/lib/openobserve/data:/data
+      - ${LOCAL_ZO_DATA_DIR:-/var/lib/openobserve/data}:/data
     environment:
       - ZO_ROOT_USER_EMAIL
       - ZO_ROOT_USER_PASSWORD
@@ -27,24 +26,19 @@ services:
       - ZO_LOCAL_MODE_STORAGE
 
     labels:
-      - "traefik.enable=true"
-      - "traefik.docker.network=app-net"
+      - traefik.enable=true
+      - traefik.docker.network=proxy
       ## https
-      - "traefik.http.routers.app.rule=Host(`${ZO_WEB_URL}`)"
-      - "traefik.http.routers.app.entrypoints=web"
-      - "traefik.http.routers.app.middlewares=redirect-https"
-      - "traefik.http.routers.app-secure.rule=Host(`${ZO_WEB_URL}`)"
-      - "traefik.http.routers.app-secure.entrypoints=web-secure"
-      - "traefik.http.routers.app-secure.service=app-secure"
-      - "traefik.http.routers.app-secure.tls=true"
-      - "traefik.http.routers.app-secure.tls.certresolver=letsencrypt"
-      - "traefik.http.services.app-secure.loadbalancer.server.port=5080"
-      - "traefik.http.middlewares.redirect-https.redirectscheme.scheme=https"
-      - "traefik.http.middlewares.redirect-https.redirectscheme.permanent=true"
+      - traefik.http.routers.zo.rule=Host(`${ZO_WEB_URL}`)
+      - traefik.http.routers.zo.entrypoints=websecure
+      - traefik.http.routers.zo.service=zo
+      - traefik.http.routers.zo.tls=true
+      - traefik.http.routers.zo.tls.certresolver=letsencrypt
+      - traefik.http.services.zo.loadbalancer.server.port=5080
       ## grpc
-      - "traefik.http.services.app-grpc.loadbalancer.server.scheme=h2c"
-      - "traefik.http.services.app-grpc.loadbalancer.server.port=5081"
-      - "traefik.http.routers.app-grpc.rule=Host(`${ZO_WEB_URL}`)"
-      - "traefik.http.routers.app-grpc.tls.certresolver=letsencrypt"
-      - "traefik.http.routers.app-grpc.entrypoints=grpc"
-      - "traefik.http.routers.app-grpc.service=app-grpc"
+      - traefik.http.services.zo-grpc.loadbalancer.server.scheme=h2c
+      - traefik.http.services.zo-grpc.loadbalancer.server.port=5081
+      - traefik.http.routers.zo-grpc.rule=Host(`${ZO_WEB_URL}`)
+      - traefik.http.routers.zo-grpc.tls.certresolver=letsencrypt
+      - traefik.http.routers.zo-grpc.entrypoints=grpc
+      - traefik.http.routers.zo-grpc.service=zo-grpc

@@ -1,11 +1,11 @@
 ---
 name: minio
 
-# TODO: traefik
-
-networks:
-  web:
-    name: minio-web
+## TODO:
+# networks:
+#   proxy:
+#     name: proxy
+#     external: true
 
 services:
   minio:
@@ -13,14 +13,11 @@ services:
     image: quay.io/minio/minio
     hostname: minio
     command: server --console-address ":${X_MINIO_PORT_CONSOLE}" /data
-    networks:
-      - web
-    # ports:
-    #   - "9000:9000"
-    #   - "9090:9090"
+    ## TODO:
+    # networks:
+    #   - proxy
     volumes:
-      - /var/lib/minio:/data
-      # - ./data:/data
+      - ${LOCAL_MINIO_DATA_DIR:-/var/lib/minio/data}:/data
     environment:
       - MINIO_ROOT_USER
       - MINIO_ROOT_PASSWORD
@@ -30,11 +27,24 @@ services:
       - MINIO_USERNAME=minio
       - MINIO_GROUPNAME=minio
       - MINIO_VOLUMES=/data
-      - X_MINIO_PORT_CONSOLE
-      - X_MINIO_PORT_API
     healthcheck:
       test:
-        [CMD, curl, -f, "http://localhost:${X_MINIO_POR_API}/minio/health/live"]
+        [
+          CMD,
+          curl,
+          --fail,
+          "http://localhost:${X_MINIO_PORT_API}/minio/health/live",
+        ]
       interval: 30s
       timeout: 20s
       retries: 3
+    # TODO:
+    # labels:
+    #   - traefik.enable=true
+    #   - traefik.docker.network=proxy
+    #   - traefik.http.routers.minio.rule=Host(`${X_MINIO_HOST}`)
+    #   - traefik.http.routers.minio.entrypoints=websecure
+    #   - traefik.http.routers.minio.service=minio
+    #   - traefik.http.routers.minio.tls=true
+    #   - traefik.http.routers.minio.tls.certresolver=letsencrypt
+    #   - traefik.http.services.minio.loadbalancer.server.port=${APP_PORT}

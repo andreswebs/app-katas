@@ -1,11 +1,10 @@
 ---
 name: jenkins
 
-# TODO: traefik
-
 networks:
-  jenkins-net:
-    name: jenkins-net
+  proxy:
+    name: proxy
+    external: true
 
 services:
   jenkins:
@@ -13,7 +12,7 @@ services:
     build:
       context: .
     networks:
-      - jenkins-net
+      - proxy
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - /usr/bin/docker:/usr/bin/docker
@@ -21,16 +20,11 @@ services:
       - /var/lib/jenkins:/var/jenkins_home
     restart: always
     labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.jenkins.rule=Host(`${JENKINS_HOST}`)"
-      - "traefik.http.routers.jenkins.entrypoints=web"
-      - "traefik.http.routers.jenkins.middlewares=redirect-https"
-      - "traefik.http.routers.jenkins-secure.rule=Host(`${JENKINS_HOST}`)"
-      - "traefik.http.routers.jenkins-secure.entrypoints=web-secure"
-      - "traefik.http.routers.jenkins-secure.service=jenkins-secure"
-      - "traefik.http.routers.jenkins-secure.tls=true"
-      - "traefik.http.routers.jenkins-secure.tls.certresolver=letsencrypt"
-      - "traefik.http.services.jenkins-secure.loadbalancer.server.port=8080"
-      - "traefik.http.middlewares.redirect-https.redirectscheme.scheme=https"
-      - "traefik.http.middlewares.redirect-https.redirectscheme.permanent=true"
-      - "traefik.docker.network=jenkins-net"
+      - traefik.enable=true
+      - traefik.docker.network=proxy
+      - traefik.http.routers.jenkins.rule=Host(`${JENKINS_HOST}`)
+      - traefik.http.routers.jenkins.entrypoints=websecure
+      - traefik.http.routers.jenkins.service=jenkins
+      - traefik.http.routers.jenkins.tls=true
+      - traefik.http.routers.jenkins.tls.certresolver=letsencrypt
+      - traefik.http.services.jenkins.loadbalancer.server.port=8080
