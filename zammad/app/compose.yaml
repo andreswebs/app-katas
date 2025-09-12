@@ -55,7 +55,7 @@ services:
     image: memcached:${MEMCACHE_VERSION:-1.6.39-alpine}
     container_name: zammad-memcached
     restart: always
-    command: memcached -m 256M
+    command: [memcached, --memory-limit, "${MEMCACHED_MEMORYLIMIT:-256}"]
     networks:
       - backend
 
@@ -63,6 +63,16 @@ services:
     image: redis:${REDIS_VERSION:-7.4.5-alpine}
     container_name: zammad-redis
     restart: always
+    command:
+      [
+        redis-server,
+        --appendonly,
+        "no",
+        --maxmemory,
+        "${REDIS_MAXMEMORY:-500mb}",
+        --maxmemory-policy,
+        "${REDIS_MAXMEMOR_POLICY:-allkeys-lru}",
+      ]
     volumes:
       - ${REDIS_DATA_DIR:-/var/lib/zammad/redis-data}:/data
     networks:
@@ -114,6 +124,7 @@ services:
       - ${ZAMMAD_STORAGE_DIR:-/var/lib/zammad/storage}:/opt/zammad/storage
     networks:
       - backend
+      # - proxy
     depends_on:
       zammad-init:
         condition: service_completed_successfully
