@@ -1,0 +1,129 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "properties": {
+    "Token": {
+      "type": "string",
+      "description": "Authentication token for auto wizard access"
+    },
+    "Users": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "login": { "type": "string" },
+          "firstname": { "type": "string" },
+          "lastname": { "type": "string" },
+          "email": { "type": "string", "format": "email" },
+          "password": { "type": "string" },
+          "roles": {
+            "type": "array",
+            "items": { "type": "string" }
+          }
+        },
+        "required": ["login", "firstname", "lastname", "email", "password"]
+      }
+    },
+    "Groups": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": { "type": "string" },
+          "note": { "type": "string" },
+          "users": {
+            "type": "array",
+            "items": { "type": "string" }
+          },
+          "signature": { "type": "string" },
+          "email_address_id": { "type": "integer" }
+        },
+        "required": ["name"]
+      }
+    },
+    "Channels": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "integer" },
+          "area": { "type": "string" },
+          "group": { "type": "string" },
+          "options": {
+            "type": "object",
+            "properties": {
+              "inbound": {
+                "type": "object",
+                "properties": {
+                  "adapter": { "type": "string" },
+                  "options": {
+                    "type": "object",
+                    "properties": {
+                      "host": { "type": "string" },
+                      "user": { "type": "string" },
+                      "password": { "type": "string" },
+                      "ssl": { "type": "boolean" }
+                    }
+                  }
+                }
+              },
+              "outbound": {
+                "type": "object",
+                "properties": {
+                  "adapter": { "type": "string" }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "EmailAddresses": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "integer" },
+          "channel_id": { "type": "integer" },
+          "name": { "type": "string" },
+          "email": { "type": "string", "format": "email" }
+        }
+      }
+    },
+    "Settings": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": { "type": "string" },
+          "value": {}
+        },
+        "required": ["name", "value"]
+      }
+    },
+    "TextModuleLocale": {
+      "type": "object",
+      "properties": {
+        "Locale": { "type": "string" }
+      }
+    },
+    "CalendarSetup": {
+      "type": "object",
+      "properties": {
+        "Ip": { "type": "string" }
+      }
+    },
+    "Permissions": {
+      "type": "array",
+      "items": { "type": "object" }
+    },
+    "Organizations": {
+      "type": "array",
+      "items": { "type": "object" }
+    },
+    "Signatures": {
+      "type": "array",
+      "items": { "type": "object" }
+    }
+  }
+}
