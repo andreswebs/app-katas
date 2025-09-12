@@ -1,6 +1,7 @@
 ---
 x-shared:
   zammad-service: &zammad-service
+    image: ${IMAGE_REPO:-ghcr.io/zammad/zammad}:${VERSION:-stable}
     environment:
       - RAILS_TRUSTED_PROXIES
       - REDIS_URL=${REDIS_URL:-redis://zammad-redis:6379}
@@ -41,7 +42,14 @@ x-shared:
       - ELASTICSEARCH_USER
       - ELASTICSEARCH_PASS
 
-    image: ${IMAGE_REPO:-ghcr.io/zammad/zammad}:${VERSION:-stable}
+      # Variables used by ngingx-proxy container for reverse proxy creations
+      # for docs refer to https://github.com/nginx-proxy/nginx-proxy
+      - VIRTUAL_HOST
+      - VIRTUAL_PORT
+      # Variables used by acme-companion for retrieval of LetsEncrypt certificate
+      # for docs refer to https://github.com/nginx-proxy/acme-companion
+      - LETSENCRYPT_HOST
+      - LETSENCRYPT_EMAIL
 
 networks:
   backend:
@@ -156,7 +164,6 @@ services:
       - ${ZAMMAD_STORAGE_DIR:-/var/lib/zammad/storage}:/opt/zammad/storage
     networks:
       - backend
-      # - proxy
     depends_on:
       zammad-init:
         condition: service_completed_successfully
@@ -184,3 +191,17 @@ services:
     depends_on:
       zammad-init:
         condition: service_completed_successfully
+
+  zammad-nginx:
+    <<: *zammad-service
+    container_name: zammad-nginx
+    command: [zammad-nginx]
+    networks:
+      - backend
+    expose:
+      - ${NGINX_PORT:-8080}
+    ports:
+      - ${NGINX_EXPOSE_PORT:-8080}:${NGINX_PORT:-8080}
+    depends_on:
+      zammad-railsserver:
+        condition: service_started
