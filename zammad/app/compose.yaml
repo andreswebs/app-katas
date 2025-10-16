@@ -79,7 +79,7 @@ services:
         --maxmemory,
         "${REDIS_MAXMEMORY:-500mb}",
         --maxmemory-policy,
-        "${REDIS_MAXMEMOR_POLICY:-allkeys-lru}",
+        "${REDIS_MAXMEMORY_POLICY:-allkeys-lru}",
       ]
     volumes:
       - ${REDIS_DATA_DIR:-/var/lib/zammad/redis-data}:/data
