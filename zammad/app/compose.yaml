@@ -93,7 +93,7 @@ services:
       start_period: 5s
 
   zammad-elasticsearch:
-    image: elasticsearch:${ELASTICSEARCH_VERSION:-8.19.2}
+    image: elastic/elasticsearch:${ELASTICSEARCH_VERSION:-8.19.6}
     container_name: zammad-elasticsearch
     restart: always
     volumes:
@@ -119,7 +119,7 @@ services:
     environment:
       - discovery.type=single-node
       - xpack.security.enabled=false
-      - ES_JAVA_OPTS=${ELASTICSEARCH_JAVA_OPTS:--Xms1g -Xmx1g}
+      - ES_JAVA_OPTS=${ELASTICSEARCH_JAVA_OPTS:--Xlog:disable -Xlog:all=warning:stderr:utctime,level,tags -Xlog:gc=debug:stderr:utctime -Xms1g -Xmx1g}
 
   zammad-init:
     <<: *zammad-service
