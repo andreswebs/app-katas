@@ -13,6 +13,10 @@ x-shared:
       - ZAMMAD_PROCESS_SESSIONS_JOBS_WORKERS
       - ZAMMAD_PROCESS_SCHEDULED_JOBS_WORKERS
       - ZAMMAD_PROCESS_DELAYED_JOBS_WORKERS
+      - ZAMMAD_WEBSOCKET_HOST
+      - ZAMMAD_WEBSOCKET_PORT
+      - ZAMMAD_RAILSSERVER_HOST
+      - ZAMMAD_RAILSSERVER_PORT
 
       - AUTOWIZARD_JSON
       - AUTOWIZARD_RELATIVE_PATH
@@ -24,16 +28,16 @@ x-shared:
       - FULL_FS_DUMP=${FULL_FS_DUMP:-no}
       - TZ=${TZ:-Etc/UTC}
 
-      - POSTGRESQL_DB
-      - POSTGRESQL_HOST
-      - POSTGRESQL_USER
+      - POSTGRESQL_HOST=${POSTGRESQL_HOST:-zammad-postgresql}
+      - POSTGRESQL_USER=${POSTGRESQL_USER:-zammad}
       - POSTGRESQL_PASS
-      - POSTGRESQL_PORT
+      - POSTGRESQL_PORT=${POSTGRESQL_PORT:-5432}
+      - POSTGRESQL_DB=${POSTGRESQL_DB:-zammad}
       - POSTGRESQL_OPTIONS=${POSTGRESQL_OPTIONS:-?pool=50}
       - POSTGRESQL_DB_CREATE
 
       - ELASTICSEARCH_ENABLED=${ELASTICSEARCH_ENABLED:-true}
-      - ELASTICSEARCH_SSL_VERIFY=${ELASTICSEARCH_SSL_VERIFY:-true}
+      - ELASTICSEARCH_SSL_VERIFY=${ELASTICSEARCH_SSL_VERIFY:-false}
       - ELASTICSEARCH_REINDEX=${ELASTICSEARCH_REINDEX:-false}
       - ELASTICSEARCH_SCHEMA=${ELASTICSEARCH_SCHEMA:-http}
       - ELASTICSEARCH_HOST=${ELASTICSEARCH_HOST:-zammad-elasticsearch}
@@ -41,6 +45,9 @@ x-shared:
       - ELASTICSEARCH_NAMESPACE=${ELASTICSEARCH_NAMESPACE:-zammad}
       - ELASTICSEARCH_USER
       - ELASTICSEARCH_PASS
+
+      - NGINX_PORT=${NGINX_PORT:-8080}
+      - NGINX_SERVER_SCHEME
 
       # Variables used by ngingx-proxy container for reverse proxy creations
       # for docs refer to https://github.com/nginx-proxy/nginx-proxy
@@ -59,6 +66,24 @@ networks:
     external: true
 
 services:
+  zammad-postgresql:
+    image: postgres:${POSTGRES_VERSION:-17.7-alpine}
+    restart: always
+    environment:
+      - PGDATA=${PGDATA:-/var/lib/postgresql/17/docker}
+      - POSTGRES_DB=${POSTGRESQL_DB:-zammad}
+      - POSTGRES_USER=${POSTGRESQL_USER:-zammad}
+      - POSTGRES_PASSWORD=${POSTGRESQL_PASS:-zammad}
+    volumes:
+      - ${POSTGRES_LOCAL_DATA_DIR:-/var/lib/postgresql/data}:${POSTGRES_DATA_DIR:-/var/lib/postgresql/data}
+    networks:
+      - backend
+    healthcheck:
+      test: pg_isready -U $${POSTGRES_USER} -h localhost -d $${POSTGRES_DB}
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
   zammad-memcached:
     image: memcached:${MEMCACHE_VERSION:-1.6.39-alpine}
     container_name: zammad-memcached
@@ -82,7 +107,7 @@ services:
         "${REDIS_MAXMEMORY_POLICY:-allkeys-lru}",
       ]
     volumes:
-      - ${REDIS_DATA_DIR:-/var/lib/zammad/redis-data}:/data
+      - ${REDIS_LOCAL_DATA_DIR:-/var/lib/zammad/redis-data}:/data
     networks:
       - backend
     healthcheck:
@@ -97,7 +122,7 @@ services:
     container_name: zammad-elasticsearch
     restart: always
     volumes:
-      - ${ELASTICSEARCH_DATA_DIR:-/var/lib/zammad/elasticsearch-data}:/usr/share/elasticsearch/data
+      - ${ELASTICSEARCH_LOCAL_DATA_DIR:-/var/lib/zammad/elasticsearch-data}:/usr/share/elasticsearch/data
     networks:
       - backend
     healthcheck:
@@ -127,13 +152,15 @@ services:
     restart: on-failure
     command: [zammad-init]
     volumes:
-      - ${ZAMMAD_STORAGE_DIR:-/var/lib/zammad/storage}:/opt/zammad/storage
+      - ${ZAMMAD_LOCAL_STORAGE_DIR:-/var/lib/zammad/storage}:/opt/zammad/storage
     user: 0:0
     networks:
       - backend
     depends_on:
       zammad-memcached:
         condition: service_started
+      zammad-postgresql:
+        condition: service_healthy
       zammad-redis:
         condition: service_healthy
       zammad-elasticsearch:
@@ -146,8 +173,8 @@ services:
     profiles: [backup]
     command: [zammad-backup]
     volumes:
-      - ${ZAMMAD_STORAGE_DIR:-/var/lib/zammad/storage}:/opt/zammad/storage:ro
-      - ${ZAMMAD_BACKUP_DIR:-/var/lib/zammad/backup}:/var/tmp/zammad
+      - ${ZAMMAD_LOCAL_STORAGE_DIR:-/var/lib/zammad/storage}:/opt/zammad/storage:ro
+      - ${ZAMMAD_LOCAL_BACKUP_DIR:-/var/lib/zammad/backup}:/var/tmp/zammad
     user: 0:0
     networks:
       - backend
@@ -161,7 +188,7 @@ services:
     restart: always
     command: [zammad-railsserver]
     volumes:
-      - ${ZAMMAD_STORAGE_DIR:-/var/lib/zammad/storage}:/opt/zammad/storage
+      - ${ZAMMAD_LOCAL_STORAGE_DIR:-/var/lib/zammad/storage}:/opt/zammad/storage
     networks:
       - backend
     depends_on:
@@ -173,7 +200,7 @@ services:
     container_name: zammad-scheduler
     command: [zammad-scheduler]
     volumes:
-      - ${ZAMMAD_STORAGE_DIR:-/var/lib/zammad/storage}:/opt/zammad/storage
+      - ${ZAMMAD_LOCAL_STORAGE_DIR:-/var/lib/zammad/storage}:/opt/zammad/storage
     networks:
       - backend
     depends_on:
@@ -185,7 +212,7 @@ services:
     container_name: zammad-websocket
     command: [zammad-websocket]
     volumes:
-      - ${ZAMMAD_STORAGE_DIR:-/var/lib/zammad/storage}:/opt/zammad/storage
+      - ${ZAMMAD_LOCAL_STORAGE_DIR:-/var/lib/zammad/storage}:/opt/zammad/storage
     networks:
       - backend
     depends_on:
@@ -198,6 +225,7 @@ services:
     command: [zammad-nginx]
     networks:
       - backend
+      - proxy
     expose:
       - ${NGINX_PORT:-8080}
     ports:

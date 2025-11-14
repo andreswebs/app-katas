@@ -1,23 +1,23 @@
 ---
 services:
   postgres:
-    image: postgres:17
+    image: postgres:${POSTGRES_VERSION:-17.7-alpine}
     restart: always
 
     environment:
-      - PGDATA
+      - PGDATA=${PGDATA:-/var/lib/postgresql/17/docker}
       - POSTGRES_DB
       - POSTGRES_USER
       - POSTGRES_PASSWORD
 
     volumes:
-      - ${LOCAL_DB_DATA_DIR}:${POSTGRES_DATA_DIR}
+      - ${POSTGRES_LOCAL_DATA_DIR:-/var/lib/postgresql/data}:${POSTGRES_DATA_DIR:-/var/lib/postgresql/data}
 
     ports:
-      - ${POSTGRES_PORT}:5432
+      - ${POSTGRES_EXPOSED_PORT}:5432
 
     healthcheck:
-      test: pg_isready -U ${POSTGRES_USER} -h localhost -d ${POSTGRES_DB}
+      test: pg_isready -U $${POSTGRES_USER} -h localhost -d $${POSTGRES_DB}
       interval: 5s
       timeout: 5s
       retries: 10
