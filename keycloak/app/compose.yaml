@@ -1,0 +1,52 @@
+---
+name: keycloak
+
+networks:
+  backend:
+    name: keycloak-backend
+  # proxy:
+  #   name: proxy
+  #   external: true
+
+services:
+  keycloak-db:
+    image: postgres:${POSTGRES_VERSION:-17.7-alpine}
+    restart: always
+    environment:
+      - PGDATA=${PGDATA:-/var/lib/postgresql/17/docker}
+      - POSTGRES_DB=${POSTGRES_DB:-keycloak}
+      - POSTGRES_USER=${POSTGRES_USER:-keycloak}
+      - POSTGRES_PASSWORD
+    volumes:
+      - ${POSTGRES_LOCAL_DATA_DIR:-/var/lib/postgresql/data}:${POSTGRES_DATA_DIR:-/var/lib/postgresql/data}
+    healthcheck:
+      test: pg_isready -U $${POSTGRES_USER} -h localhost -d $${POSTGRES_DB}
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks:
+      - backend
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:${KEYCLOAK_VERSION:-26.4}
+    container_name: keycloak
+    environment:
+      - KC_DB=postgres
+      - KC_DB_USERNAME=${POSTGRES_USER}
+      - KC_DB_PASSWORD=${POSTGRES_PASSWORD}
+      - "KC_DB_URL=jdbc:postgresql://keycloak-db:5432/${POSTGRES_DB}${POSTGRES_OPTIONS}"
+      - KC_HEALTH_ENABLED=true
+      - KC_HTTP_ENABLED=true
+      - KC_HTTP_PORT=${KEYCLOAK_PORT:-8080}
+      - KC_BOOTSTRAP_ADMIN_USERNAME
+      - KC_BOOTSTRAP_ADMIN_PASSWORD
+      - KC_HOSTNAME
+    command: start
+    ports:
+      - ${KEYCLOAK_EXPOSED_PORT:-8080}:${KEYCLOAK_PORT:-8080}
+    depends_on:
+      keycloak-db:
+        condition: service_healthy
+    networks:
+      - backend
+      # - proxy
