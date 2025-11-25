@@ -78,6 +78,12 @@ ansible-galaxy install -r requirements.yml
 popd
 ```
 
+Or AWS:
+
+```sh
+./playbooks/docker-app.aws.yml -i inventory/aws_ec2.yml -e upgrade_system=true -e app=wireguard -e ansible_aws_ssm_bucket_name=yourbucket
+```
+
 ## Example: k3s single node on Hetzner Cloud
 
 ```sh

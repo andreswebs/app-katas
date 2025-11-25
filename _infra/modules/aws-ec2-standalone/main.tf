@@ -4,7 +4,7 @@ data "aws_subnet" "this" {
 
 module "ec2_base" {
   source              = "andreswebs/ec2-base/aws"
-  version             = "0.8.0"
+  version             = "0.11.1"
   name                = var.name
   vpc_id              = data.aws_subnet.this.vpc_id
   cidr_whitelist_ipv4 = var.cidr_whitelist_ipv4
@@ -14,7 +14,7 @@ module "ec2_base" {
 
 module "ec2_instance" {
   source                 = "andreswebs/ec2-instance-linux/aws"
-  version                = "0.17.0"
+  version                = "0.18.0"
   name                   = var.name
   iam_profile_name       = module.ec2_base.instance_profile.name
   subnet_id              = data.aws_subnet.this.id

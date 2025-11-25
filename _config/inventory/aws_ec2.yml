@@ -13,7 +13,7 @@ keyed_groups:
 filters:
   instance-state-name: running
 
-use_contrib_script_compatible_ec2_tag_keys: true
+# use_contrib_script_compatible_ec2_tag_keys: true
 
 hostnames:
   - instance-id

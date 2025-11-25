@@ -1,8 +1,9 @@
 ---
 collections:
   - name: hetzner.hcloud
-  - name: amazon.aws
   - name: google.cloud
+  - name: amazon.aws
+  - name: community.aws
 
 roles:
   - name: andreswebs.docker

@@ -5,6 +5,10 @@
   hosts:
     - "vm_tag_{{ app }}"
 
+  vars:
+    ansible_connection: aws_ssm
+    ssm_timeout: 60
+
   become: true
   become_user: root
   tasks:

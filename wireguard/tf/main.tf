@@ -4,15 +4,12 @@ data "aws_subnet" "this" {
 
 module "ec2_base" {
   source              = "andreswebs/ec2-base/aws"
-  version             = "0.3.0"
+  version             = "0.11.1"
   vpc_id              = data.aws_subnet.this.vpc_id
   cidr_whitelist_ipv4 = var.cidr_whitelist_ipv4
   name                = "wireguard"
 
-  create_ssh_key = true
-  allow_ssh      = true
-
-  extra_ingress_rules = [
+  extra_ingress_rules_ipv4 = [
     {
       ip_protocol = "udp"
       from_port   = "51820"
@@ -25,7 +22,7 @@ module "ec2_base" {
 
 module "ec2_instance" {
   source                 = "andreswebs/ec2-instance-linux/aws"
-  version                = "0.8.0"
+  version                = "0.18.0"
   subnet_id              = data.aws_subnet.this.id
   vpc_security_group_ids = [module.ec2_base.security_group.id]
   iam_profile_name       = module.ec2_base.instance_profile.name
@@ -36,12 +33,12 @@ module "ec2_instance" {
 
   associate_public_ip_address = true
 
-  instance_type = "t3a.small"
+  instance_type = "t4a.small"
 
   extra_volumes = [
     {
       device_name = "/dev/sdf"
-      size        = 5
+      size        = 2
       mount_path  = "/etc/wireguard"
       uid         = 2000
       gid         = 2000
