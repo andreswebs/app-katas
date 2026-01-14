@@ -1,0 +1,25 @@
+---
+name: otel-collector
+
+# networks:
+#   backend:
+#     name: otel-collector
+
+services:
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:latest
+    container_name: otel-collector
+    restart: always
+    ports:
+      - 4317:4317 # gRPC receiver
+      - 4318:4318 # http receiver
+      - 8888:8888 # prometheus collector
+      - 8889:8889 # prometheus exporter
+      - 1888:1888 # pprof
+      - 13133:13133 # healthcheck
+      - 55679:55679 # zpages
+    command: [--config=/etc/otelcol/config.yaml]
+    environment:
+      - DD_API_KEY
+    volumes:
+      - ./otelcol.config.yaml:/etc/otelcol/config.yaml

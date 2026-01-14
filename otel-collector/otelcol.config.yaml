@@ -1,0 +1,80 @@
+---
+exporters:
+  datadog:
+    api:
+      key: ${env:DD_API_KEY}
+      site: ${env:DD_SITE}
+    sending_queue:
+      batch:
+        min_size: 10
+        max_size: 100
+        flush_timeout: 10s
+
+receivers:
+  otlp:
+    protocols:
+      http: {}
+      grpc: {}
+
+  # prometheus:
+  #   config:
+  #     scrape_configs:
+  #     - job_name: otelcol
+  #       scrape_interval: 10s
+  #       static_configs:
+  #       - targets: [0.0.0.0:8888]
+
+  # docker_stats:
+  #   metrics:
+  #     container.network.io.usage.rx_packets:
+  #       enabled: true
+  #     container.network.io.usage.tx_packets:
+  #       enabled: true
+  #     container.cpu.usage.system:
+  #       enabled: true
+  #     container.memory.rss:
+  #       enabled: true
+  #     container.blockio.io_serviced_recursive:
+  #       enabled: true
+
+  # filelog:
+  #   include_file_path: true
+  #   poll_interval: 500ms
+  #   include:
+  #     # Logs will be collected from the below file path. Please ensure it is correct or edit as needed.
+  #     - /var/log/**/*example*/*.log
+  #     # # It is essential to extract the trace_id and span_id from the logs in order to ensure that logs / traces correlation works.
+  #     # # For JSON logs, json_parser will parse the body into attributes, while trace_parser will extract the trace_id and span_id.
+  #     # operators:
+  #     #  - id : parse_body
+  #     #    type: json_parser
+  #     #  - id: trace
+  #     #    type: trace_parser
+  #     #    trace_id:
+  #     #      parse_from: attributes.trace_id
+  #     #    span_id:
+  #     #      parse_from: attributes.span_id
+
+connectors:
+  datadog/connector: {}
+
+service:
+  pipelines:
+    metrics:
+      # receivers: [docker_stats, otlp, datadog/connector]
+      receivers: [otlp, datadog/connector]
+      exporters: [datadog]
+    traces:
+      receivers: [otlp]
+      exporters: [datadog/connector]
+    # traces/sampling:
+    #   # Add any sampling here, so that the generated trace metrics account for all traces.
+    #   receivers: [datadog/connector]
+    #   # Add any sampling here
+    #   processors: []
+    #   exporters: [datadog]
+
+    logs:
+      # receivers: [otlp, filelog]
+      receivers: [otlp]
+      exporters: [datadog]

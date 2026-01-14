@@ -1,0 +1,45 @@
+---
+receivers:
+  otlp:
+    protocols:
+      grpc:
+      http:
+
+processors:
+  memory_limiter:
+    check_interval: 1s
+    limit_percentage: 25
+    spike_limit_percentage: 20
+
+  # probabilistic_sampler:
+  #   sampling_percentage: 40
+
+  groupbytrace:
+    wait_duration: 4s
+    num_traces: 1000
+
+  batch:
+    timeout: 10s
+
+exporters:
+  logging:
+    loglevel: info
+
+  jaeger:
+    endpoint: jaeger:14250
+    tls:
+      insecure: true
+
+extensions:
+  health_check:
+  pprof:
+  zpages:
+
+service:
+  extensions: [health_check, pprof, zpages]
+  pipelines:
+    traces:
+      receivers: [otlp]
+      # processors: [memory_limiter, probabilistic_sampler, groupbytrace, batch]
+      processors: [memory_limiter, groupbytrace, batch]
+      exporters: [logging, jaeger]
