@@ -1,15 +1,17 @@
 ---
 name: otel-collector
 
-# networks:
-#   backend:
-#     name: otel-collector
+networks:
+  backend:
+    name: otel-collector
 
 services:
   otel-collector:
     image: otel/opentelemetry-collector-contrib:latest
     container_name: otel-collector
     restart: always
+    networks:
+      - backend
     ports:
       - 4317:4317 # gRPC receiver
       - 4318:4318 # http receiver
@@ -22,4 +24,5 @@ services:
     environment:
       - DD_API_KEY
     volumes:
-      - ./otelcol.config.yaml:/etc/otelcol/config.yaml
+      - ./otelcol.datadog.config.yaml:/etc/otelcol/config.yaml
+      # - ./otelcol.debug.config.yaml:/etc/otelcol/config.yaml

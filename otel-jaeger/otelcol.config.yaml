@@ -2,8 +2,8 @@
 receivers:
   otlp:
     protocols:
-      grpc:
-      http:
+      grpc: {}
+      http: {}
 
 processors:
   memory_limiter:
@@ -31,9 +31,9 @@ exporters:
       insecure: true
 
 extensions:
-  health_check:
-  pprof:
-  zpages:
+  health_check: {}
+  pprof: {}
+  zpages: {}
 
 service:
   extensions: [health_check, pprof, zpages]

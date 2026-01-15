@@ -10,6 +10,9 @@ exporters:
         max_size: 100
         flush_timeout: 10s
 
+  logging:
+    loglevel: debug
+
 receivers:
   otlp:
     protocols:
@@ -63,10 +66,12 @@ service:
     metrics:
       # receivers: [docker_stats, otlp, datadog/connector]
       receivers: [otlp, datadog/connector]
-      exporters: [datadog]
+      exporters: [datadog, logging]
+
     traces:
       receivers: [otlp]
-      exporters: [datadog/connector]
+      exporters: [datadog/connector, logging]
+
     # traces/sampling:
     #   # Add any sampling here, so that the generated trace metrics account for all traces.
     #   receivers: [datadog/connector]
@@ -77,4 +82,4 @@ service:
     logs:
       # receivers: [otlp, filelog]
       receivers: [otlp]
-      exporters: [datadog]
+      exporters: [datadog, logging]
