@@ -11,6 +11,7 @@ services:
     image: docker.io/chromedp/headless-shell
     restart: unless-stopped
     ports:
-      - ${LOCAL_HEADLESS_SHELL_PORT:-9223}:9223
+      - 9222:9222
+      - 9223:9223
     networks:
       - headless-shell
