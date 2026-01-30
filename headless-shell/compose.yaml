@@ -1,0 +1,16 @@
+---
+name: headless-shell
+
+networks:
+  headless-shell:
+    name: headless-shell
+
+services:
+  headless-shell:
+    container_name: headless-shell
+    image: docker.io/chromedp/headless-shell
+    restart: unless-stopped
+    ports:
+      - ${LOCAL_HEADLESS_SHELL_PORT:-9223}:9223
+    networks:
+      - headless-shell
