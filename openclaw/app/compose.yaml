@@ -1,0 +1,25 @@
+---
+services:
+  openclaw-gateway:
+    image: ${OPENCLAW_IMAGE:-docker.io/andreswebs/openclaw}
+    restart: unless-stopped
+    environment:
+      - "OPENCLAW_GATEWAY_BIND=${OPENCLAW_GATEWAY_BIND:-lan}"
+      - "OPENCLAW_GATEWAY_PORT=${OPENCLAW_GATEWAY_PORT:-18789}"
+      - OPENCLAW_GATEWAY_TOKEN
+      - GOG_KEYRING_PASSWORD
+      - GOOGLE_PLACES_API_KEY
+      - BRAVE_API_KEY
+    volumes:
+      - "${LOCAL_OPENCLAW_CONFIG_DIR:-/home/openclaw/.openclaw}:/home/openclaw/.openclaw"
+      - "${LOCAL_OPENCLAW_WORKSPACE_DIR:-/home/openclaw/.openclaw/workspace}:/home/openclaw/.openclaw/workspace"
+    ports:
+      - "127.0.0.1:${LOCAL_OPENCLAW_GATEWAY_PORT:-18789}:${OPENCLAW_GATEWAY_PORT:-18789}"
+    command:
+      [
+        gateway,
+        --bind,
+        "${OPENCLAW_GATEWAY_BIND}",
+        --port,
+        "${OPENCLAW_GATEWAY_PORT}",
+      ]

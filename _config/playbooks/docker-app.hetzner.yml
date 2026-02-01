@@ -24,29 +24,43 @@
     - name: Install traefik
       ansible.builtin.import_role:
         name: andreswebs.docker_app
+      when: install_traefik | default(false) | bool
       vars:
         app_name: traefik
-        app_src: "{{ playbook_dir }}/../../traefik/"
+        app_src: "{{ playbook_dir }}/../../traefik/app/"
         app_uid: 2020
         app_gid: 2020
 
-    - name: Install whoami
+    - name: Install openclaw
       ansible.builtin.import_role:
         name: andreswebs.docker_app
       vars:
-        app_name: whoami
-        app_src: "{{ playbook_dir }}/../../whoami/"
-        app_uid: 2022
-        app_gid: 2022
+        app_src: "{{ playbook_dir }}/../../openclaw/app/"
+        app_name: openclaw
+        app_user: openclaw
+        app_group: openclaw
+        app_home: /home/openclaw
+        app_uid: 2000
+        app_gid: 2000
+        app_home_decouple: false
 
-    - name: Install twentycrm
-      ansible.builtin.import_role:
-        name: andreswebs.docker_app
-      vars:
-        app_name: twentycrm
-        app_src: "{{ playbook_dir }}/../../twentycrm/"
-        app_uid: 2002
-        app_gid: 2002
+    # - name: Install whoami
+    #   ansible.builtin.import_role:
+    #     name: andreswebs.docker_app
+    #   vars:
+    #     app_name: whoami
+    #     app_src: "{{ playbook_dir }}/../../whoami/"
+    #     app_uid: 2022
+    #     app_gid: 2022
+
+    # - name: Install twentycrm
+    #   ansible.builtin.import_role:
+    #     name: andreswebs.docker_app
+    #   vars:
+    #     app_name: twentycrm
+    #     app_src: "{{ playbook_dir }}/../../twentycrm/"
+    #     app_uid: 2002
+    #     app_gid: 2002
 
     - name: Check if a reboot is required
       ansible.builtin.shell: "[ -f /var/run/reboot-required ]"
