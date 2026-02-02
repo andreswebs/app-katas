@@ -19,6 +19,8 @@ docker run -it --rm \
 
 ssh tunnel:
 
+(assuming "bot" is configured in `~/.ssh/config`)
+
 ```sh
-ssh -N -L 18789:127.0.0.1:18789 root@bot
+ssh -N -L 18789:127.0.0.1:18789 bot
 ```

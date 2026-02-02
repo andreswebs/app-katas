@@ -21,15 +21,15 @@
       tags:
         - system
 
-    - name: Install traefik
-      ansible.builtin.import_role:
-        name: andreswebs.docker_app
-      when: install_traefik | default(false) | bool
-      vars:
-        app_name: traefik
-        app_src: "{{ playbook_dir }}/../../traefik/app/"
-        app_uid: 2020
-        app_gid: 2020
+    # - name: Install traefik
+    #   ansible.builtin.import_role:
+    #     name: andreswebs.docker_app
+    #   when: install_traefik | default(false) | bool
+    #   vars:
+    #     app_name: traefik
+    #     app_src: "{{ playbook_dir }}/../../traefik/app/"
+    #     app_uid: 2020
+    #     app_gid: 2020
 
     - name: Install openclaw
       ansible.builtin.import_role:
