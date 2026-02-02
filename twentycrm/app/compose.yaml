@@ -10,17 +10,19 @@ networks:
 
 services:
   server:
+    container_name: twentycrm-server
     image: twentycrm/twenty:${TWENTYCRM_VERSION:-latest}
+    init: true
     restart: always
 
     volumes:
-      - ${LOCAL_SERVER_DATA_DIR}:/app/packages/twenty-server/.local-storage
+      - ${LOCAL_SERVER_DATA_DIR:-/var/lib/twentycrm/server-storage}:/app/packages/twenty-server/.local-storage
 
     ports:
-      - ${SERVER_PORT:-3000}:${NODE_PORT}
+      - ${SERVER_PORT:-3000}:${NODE_PORT:-3000}
 
     environment:
-      - NODE_PORT
+      - NODE_PORT=${NODE_PORT:-3000}
 
       - APP_SECRET
 
@@ -39,7 +41,7 @@ services:
       - STORAGE_S3_SECRET_ACCESS_KEY
 
     healthcheck:
-      test: curl --fail http://localhost:${NODE_PORT}/healthz
+      test: curl --fail http://localhost:$${NODE_PORT}/healthz
       interval: 5s
       timeout: 5s
       retries: 20
@@ -58,17 +60,19 @@ services:
       - traefik.http.routers.twentycrm.tls.certresolver=letsencrypt
       - traefik.http.services.twentycrm.loadbalancer.server.port=${SERVER_PORT}
 
-    # depends_on:
-    #   db:
-    #     condition: service_healthy
+    depends_on:
+      db:
+        condition: service_healthy
 
   worker:
+    container_name: twentycrm-worker
     image: twentycrm/twenty:${TWENTYCRM_VERSION:-latest}
     restart: always
+    init: true
     command: ["yarn", "worker:prod"]
 
     volumes:
-      - ${LOCAL_SERVER_DATA_DIR}:/app/packages/twenty-server/.local-storage
+      - ${LOCAL_SERVER_DATA_DIR:-/var/lib/twentycrm/server-storage}:/app/packages/twenty-server/.local-storage
 
     environment:
       - APP_SECRET
@@ -91,35 +95,35 @@ services:
       - db
 
     depends_on:
-      # db:
-      #   condition: service_healthy
       server:
         condition: service_healthy
 
-  # db:
-  #   image: postgres:16
-  #   restart: always
+  db:
+    container_name: twentycrm-db
+    image: postgres:${POSTGRES_VERSION:-16.11-alpine}
+    restart: always
 
-  #   environment:
-  #     - PGDATA
-  #     - POSTGRES_DB
-  #     - POSTGRES_USER
-  #     - POSTGRES_PASSWORD
+    environment:
+      - PGDATA=${PGDATA:-/var/lib/postgresql/16/docker}
+      - POSTGRES_DB
+      - POSTGRES_USER
+      - POSTGRES_PASSWORD
 
-  #   volumes:
-  #     - ${LOCAL_DB_DATA_DIR}:${POSTGRES_DATA_DIR}
+    volumes:
+      - ${POSTGRES_LOCAL_DATA_DIR:-/var/lib/twentycrm/postgresql/data}:${POSTGRES_DATA_DIR:-/var/lib/postgresql/data}
 
-  #   healthcheck:
-  #     test: pg_isready -U ${POSTGRES_USER} -h localhost -d ${POSTGRES_DB}
-  #     timeout: 5s
-  #     interval: 5s
-  #     retries: 10
+    healthcheck:
+      test: pg_isready -U $${POSTGRES_USER} -h localhost -d $${POSTGRES_DB}
+      timeout: 5s
+      interval: 5s
+      retries: 10
 
-  #   networks:
-  #     - db
+    networks:
+      - db
 
   redis:
-    image: redis
+    container_name: twentycrm-redis
+    image: redis:latest
     restart: always
     command: [--maxmemory-policy, noeviction]
 
