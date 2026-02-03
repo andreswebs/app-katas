@@ -1,6 +1,13 @@
 ---
+name: openclaw
+
+networks:
+  openclaw:
+    name: openclaw
+
 services:
   openclaw-gateway:
+    container_name: openclaw-gateway
     image: ${OPENCLAW_IMAGE:-docker.io/andreswebs/openclaw}
     restart: unless-stopped
     environment:
@@ -11,6 +18,10 @@ services:
       - GOOGLE_PLACES_API_KEY
       - BRAVE_API_KEY
     volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /usr/bin/docker:/usr/bin/docker
+      - /usr/libexec/docker:/usr/libexec/docker
+      - /home/linuxbrew/.linuxbrew:/home/linuxbrew/.linuxbrew
       - "${LOCAL_OPENCLAW_CONFIG_DIR:-/home/openclaw/.openclaw}:/home/openclaw/.openclaw"
       - "${LOCAL_OPENCLAW_WORKSPACE_DIR:-/home/openclaw/.openclaw/workspace}:/home/openclaw/.openclaw/workspace"
     ports:
