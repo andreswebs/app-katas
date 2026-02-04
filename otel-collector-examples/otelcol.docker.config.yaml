@@ -1,0 +1,54 @@
+---
+exporters:
+  debug: {}
+
+processors:
+  batch:
+    timeout: 10s
+
+  filter/exclude_otelcol:
+    logs:
+      log_record:
+        - 'resource.attributes["service.name"] == "otelcol-contrib"'
+
+receivers:
+  otlp:
+    protocols:
+      http: {}
+      grpc: {}
+
+  filelog:
+    include: [/var/lib/docker/containers/*/*-json.log]
+    poll_interval: 200ms
+    start_at: end
+    include_file_name: false
+    include_file_path: false
+    operators:
+      - id: container-parser
+        type: container
+        format: docker
+        add_metadata_from_filepath: false
+      - id: extract-service-name
+        type: regex_parser
+        parse_from: body
+        regex: 'service.name":\s*"(?P<svc>[^"]+)"'
+      - id: set-service-name
+        type: move
+        from: attributes.svc
+        to: resource["service.name"]
+        if: "attributes.svc != nil"
+
+service:
+  pipelines:
+    metrics:
+      receivers: [otlp]
+      exporters: [debug]
+
+    traces:
+      receivers: [otlp]
+      exporters: [debug]
+
+    logs:
+      receivers: [otlp, filelog]
+      processors: [batch, filter/exclude_otelcol]
+      exporters: [debug]

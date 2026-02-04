@@ -10,9 +10,6 @@ exporters:
         max_size: 100
         flush_timeout: 10s
 
-  logging:
-    loglevel: debug
-
 receivers:
   otlp:
     protocols:
@@ -82,4 +79,4 @@ service:
     logs:
       # receivers: [otlp, filelog]
       receivers: [otlp]
-      exporters: [datadog, logging]
+      exporters: [datadog]

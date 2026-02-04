@@ -21,8 +21,5 @@ services:
       - 13133:13133 # healthcheck
       - 55679:55679 # zpages
     command: [--config=/etc/otelcol/config.yaml]
-    environment:
-      - DD_API_KEY
     volumes:
-      - ./otelcol.datadog.config.yaml:/etc/otelcol/config.yaml
-      # - ./otelcol.debug.config.yaml:/etc/otelcol/config.yaml
+      - ${OTELCOL_CONFIG:-./otelcol.debug.config.yaml}:/etc/otelcol/config.yaml

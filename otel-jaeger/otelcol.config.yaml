@@ -22,9 +22,6 @@ processors:
     timeout: 10s
 
 exporters:
-  logging:
-    loglevel: info
-
   jaeger:
     endpoint: jaeger:14250
     tls:
@@ -42,4 +39,4 @@ service:
       receivers: [otlp]
       # processors: [memory_limiter, probabilistic_sampler, groupbytrace, batch]
       processors: [memory_limiter, groupbytrace, batch]
-      exporters: [logging, jaeger]
+      exporters: [jaeger]
