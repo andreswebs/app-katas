@@ -17,11 +17,19 @@ services:
       - GOG_KEYRING_PASSWORD
       - GOOGLE_PLACES_API_KEY
       - BRAVE_API_KEY
+      - ZAI_API_KEY
+      - TELEGRAM_BOT_TOKEN
+      - GEMINI_API_KEY
+      - ANTHROPIC_OAUTH_TOKEN
+      - OPENAI_API_KEY
+      - AWS_BEARER_TOKEN_BEDROCK
+      - AWS_REGION
+
     volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
-      - /usr/bin/docker:/usr/bin/docker
-      - /usr/libexec/docker:/usr/libexec/docker
-      - /home/linuxbrew/.linuxbrew:/home/linuxbrew/.linuxbrew
+      - "${DOCKER_SOCK:-/var/run/docker.sock}:/var/run/docker.sock"
+      - "${DOCKER_BIN:-/usr/bin/docker}:/usr/bin/docker"
+      - "${DOCKER_LIBEXEC:-/usr/libexec/docker}:/usr/libexec/docker"
+      - "${LINUXBREW_DIR:-/home/linuxbrew/.linuxbrew}:/home/linuxbrew/.linuxbrew"
       - "${LOCAL_OPENCLAW_CONFIG_DIR:-/home/openclaw/.openclaw}:/home/openclaw/.openclaw"
       - "${LOCAL_OPENCLAW_WORKSPACE_DIR:-/home/openclaw/.openclaw/workspace}:/home/openclaw/.openclaw/workspace"
     ports:
