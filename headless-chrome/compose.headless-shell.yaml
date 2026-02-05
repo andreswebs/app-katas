@@ -2,8 +2,8 @@
 name: headless-shell
 
 networks:
-  headless-shell:
-    name: headless-shell
+  headless-browser:
+    name: headless-browser
 
 services:
   headless-shell:
@@ -14,4 +14,4 @@ services:
       - 9222:9222
       - 9223:9223
     networks:
-      - headless-shell
+      - headless-browser
