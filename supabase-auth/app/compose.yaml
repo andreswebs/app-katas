@@ -1,0 +1,56 @@
+---
+name: supabase-auth
+
+networks:
+  db:
+    name: supabase-auth
+
+services:
+  auth-db:
+    container_name: supabase-auth-postgres
+    image: postgres:${POSTGRES_VERSION:-18.3-alpine}
+    restart: always
+
+    environment:
+      - PGDATA=${PGDATA:-/var/lib/postgresql/data}
+      - POSTGRES_DB=${AUTH_POSTGRES_DB}
+      - POSTGRES_USER=${AUTH_POSTGRES_USER}
+      - POSTGRES_PASSWORD=${AUTH_POSTGRES_PASSWORD}
+
+    volumes:
+      - ${POSTGRES_LOCAL_DATA_DIR:-/var/lib/postgresql/data}:${POSTGRES_DATA_DIR:-/var/lib/postgresql/data}
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+
+    networks:
+      - db
+
+    healthcheck:
+      test: pg_isready -U $${POSTGRES_USER} -h localhost -d $${POSTGRES_DB}
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  auth:
+    container_name: supabase-auth
+    image: supabase/auth:v2.187.0
+    depends_on:
+      auth-db:
+        condition: service_healthy
+    environment:
+      - GOTRUE_SITE_URL=http://localhost/auth
+      - API_EXTERNAL_URL=http://localhost/auth
+      - GOTRUE_JWT_SECRET
+      - GOTRUE_DB_DRIVER=postgres
+      - DATABASE_URL=postgres://${AUTH_POSTGRES_USER}:${AUTH_POSTGRES_PASSWORD}@auth-db:5432/${AUTH_POSTGRES_DB}?search_path=auth
+      - GOTRUE_API_HOST=0.0.0.0
+      - PORT=${SUPABASE_AUTH_PORT:-9999}
+      - GOTRUE_MAILER_AUTOCONFIRM=true
+      - DB_NAMESPACE=auth
+      - GOTRUE_DB_NAMESPACE=auth
+      - GOTRUE_JWT_AUD=authenticated
+      - GOTRUE_JWT_DEFAULT_GROUP_NAME=authenticated
+      - GOTRUE_JWT_ADMIN_ROLES=superadmin
+    networks:
+      - db
+    ports:
+      - ${SUPABASE_AUTH_EXPOSED_PORT:-9999}:${SUPABASE_AUTH_PORT:-9999}
