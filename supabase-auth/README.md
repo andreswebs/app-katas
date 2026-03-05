@@ -4,6 +4,17 @@ Check health:
 curl http://localhost:9999/health
 ```
 
+Signup:
+
+```sh
+curl -s -X POST "${AUTH_SERVER_URL}/signup" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "testuser@example.com",
+    "password": "Test1234!"
+  }' | jq .
+```
+
 ## References
 
 <https://github.com/supabase/auth>
