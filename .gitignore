@@ -2,6 +2,7 @@
 **/secrets
 
 !**/.env.example
+!**/.env.example.*
 
 .DS_Store
 .env

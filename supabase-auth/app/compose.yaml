@@ -7,7 +7,7 @@ networks:
 
 services:
   auth-db:
-    container_name: supabase-auth-postgres
+    container_name: auth-postgres
     image: postgres:${POSTGRES_VERSION:-18.3-alpine}
     restart: always
 
@@ -19,7 +19,7 @@ services:
 
     volumes:
       - ${POSTGRES_LOCAL_DATA_DIR:-/var/lib/postgresql/data}:${POSTGRES_DATA_DIR:-/var/lib/postgresql/data}
-      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+      - ./auth-db-init/init.sql:/docker-entrypoint-initdb.d/init.sql
 
     networks:
       - db
@@ -37,13 +37,13 @@ services:
       auth-db:
         condition: service_healthy
     environment:
-      - GOTRUE_SITE_URL=http://localhost/auth
-      - API_EXTERNAL_URL=http://localhost/auth
+      - GOTRUE_SITE_URL=http://localhost:${AUTH_PORT:-9999}/auth
+      - API_EXTERNAL_URL=http://localhost:${AUTH_PORT:-9999}/auth
       - GOTRUE_JWT_SECRET
       - GOTRUE_DB_DRIVER=postgres
       - DATABASE_URL=postgres://${AUTH_POSTGRES_USER}:${AUTH_POSTGRES_PASSWORD}@auth-db:5432/${AUTH_POSTGRES_DB}?search_path=auth
       - GOTRUE_API_HOST=0.0.0.0
-      - PORT=${SUPABASE_AUTH_PORT:-9999}
+      - PORT=${AUTH_PORT:-9999}
       - GOTRUE_MAILER_AUTOCONFIRM=true
       - DB_NAMESPACE=auth
       - GOTRUE_DB_NAMESPACE=auth
@@ -53,4 +53,4 @@ services:
     networks:
       - db
     ports:
-      - ${SUPABASE_AUTH_EXPOSED_PORT:-9999}:${SUPABASE_AUTH_PORT:-9999}
+      - ${AUTH_EXPOSED_PORT:-9999}:${AUTH_PORT:-9999}
