@@ -1,3 +1,11 @@
+Check health:
+
+```sh
+curl http://localhost:9999/health
+```
+
+## References
+
 <https://github.com/supabase/auth>
 
 <https://supabase.com/docs/guides/self-hosting/docker#configuring-and-securing-supabase>
