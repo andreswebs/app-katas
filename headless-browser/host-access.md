@@ -10,11 +10,11 @@ From inside any container, use `host.docker.internal` instead of `localhost` to 
 
 For example, if a web app runs on `localhost:3000` on the host, the container can reach it at:
 
-```
+```txt
 http://host.docker.internal:3000
 ```
 
-## macOS (Docker Desktop / Rancher Desktop)
+### macOS (Docker Desktop / Rancher Desktop)
 
 `host.docker.internal` works out of the box — no extra configuration needed.
 
@@ -22,7 +22,7 @@ Rancher Desktop also provides `host.rancher-desktop.internal` as an alternative.
 
 > **Note (Rancher Desktop):** Ensure the container runtime is set to **Docker (moby)**, not containerd, when using `docker compose`.
 
-## Linux
+### Linux
 
 On Linux, `host.docker.internal` must be explicitly enabled via `extra_hosts`:
 
@@ -33,7 +33,7 @@ services:
       - "host.docker.internal:host-gateway"
 ```
 
-## Verification
+### Verification
 
 Test connectivity from inside a container:
 
@@ -42,7 +42,7 @@ docker run -it --rm busybox nslookup host.docker.internal
 docker run -it --rm busybox ping host.docker.internal
 ```
 
-## Notes
+### Notes
 
 - The container stays on its bridge network and remains accessible to other containers on that network.
 - No need to use `network_mode: host`.
