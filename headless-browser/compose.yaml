@@ -1,16 +1,17 @@
 ---
-name: headless-chrome
+name: headless-browser
 
 networks:
   headless-browser:
     name: headless-browser
 
 services:
-  headless-chrome:
-    container_name: headless-chrome
-    image: docker.io/andreswebs/headless-chrome
+  headless-browser:
+    container_name: headless-browser
+    image: docker.io/chromedp/headless-shell
     restart: unless-stopped
     ports:
       - 9222:9222
+      - 9223:9223
     networks:
       - headless-browser
