@@ -1,4 +1,4 @@
-# `AGENTS.md`
+# AI Agent Instructions
 
 ## Project Overview
 
@@ -16,17 +16,20 @@ This repository contains a collection of application deployment and infrastructu
 ### General
 
 - Clone the repository:
+
   ```sh
   git clone <repo-url>
   cd app-katas
   ```
-- Install Docker and Docker Compose (see https://docs.docker.com/get-docker/)
-- Install Terraform (see https://developer.hashicorp.com/terraform/tutorials/aws-get-started/install-cli)
-- Install Ansible (see https://docs.ansible.com/ansible/latest/installation_guide/intro_installation.html)
+
+- Install Docker and Docker Compose (see <https://docs.docker.com/get-docker/>)
+- Install Terraform (see <https://developer.hashicorp.com/terraform/tutorials/aws-get-started/install-cli>)
+- Install Ansible (see <https://docs.ansible.com/ansible/latest/installation_guide/intro_installation.html>)
 
 ### Python/Ansible dependencies
 
 - Install Ansible Galaxy roles:
+
   ```sh
   ansible-galaxy install -r _config/requirements.yml
   ```
@@ -36,15 +39,20 @@ This repository contains a collection of application deployment and infrastructu
 ### Docker Compose
 
 - Start an app (example for Zammad):
+
   ```sh
   cd zammad/app
   docker compose up
   ```
+
 - Stop an app:
+
   ```sh
   docker compose down
   ```
+
 - View running containers:
+
   ```sh
   docker ps
   ```
@@ -65,6 +73,133 @@ This repository contains a collection of application deployment and infrastructu
   ```sh
   terraform destroy
   ```
+
+### Connecting to AWS EC2 instances (SSM Session Manager)
+
+AWS EC2 instances in this repo (see `_infra/aws`, built from the
+`_infra/modules/aws-ec2-standalone` module) are accessed via **AWS SSM Session
+Manager, not SSH**. There is intentionally no SSH keypair and no inbound port 22.
+
+Access works because the instance IAM role (from the upstream
+`andreswebs/ec2-role/aws` module, via `ec2-base`) attaches
+`AmazonSSMManagedInstanceCore`, which registers the instance as an SSM managed
+node. The SSM agent (preinstalled on the AWS Linux AMIs) dials outbound to the
+SSM service, so only egress is required.
+
+- Prerequisites (client machine):
+  - AWS CLI v2
+  - Session Manager plugin: `brew install --cask session-manager-plugin`
+    (`aws ssm start-session` shells out to this binary)
+
+- Find the instance id (the module tags the instance `Name=poc`; no Terraform
+  outputs are defined):
+
+  ```sh
+  export INSTANCE_ID=$(aws ec2 describe-instances \
+    --filters "Name=tag:Name,Values=poc" "Name=instance-state-name,Values=running" \
+    --query 'Reservations[].Instances[].InstanceId' --output text)
+  ```
+
+- Confirm it registered as a managed node:
+
+  ```sh
+  aws ssm describe-instance-information \
+    --query "InstanceInformationList[?InstanceId=='${INSTANCE_ID}'].PingStatus" --output text
+  ```
+
+- Open an interactive shell:
+
+  ```sh
+  aws ssm start-session --target "${INSTANCE_ID}"
+  ```
+
+- Port-forward a service on the instance to localhost:
+
+  ```sh
+  aws ssm start-session --target "${INSTANCE_ID}" \
+    --document-name AWS-StartPortForwardingSession \
+    --parameters '{"portNumber":["80"],"localPortNumber":["8080"]}'
+  ```
+
+- SSH/scp over SSM (optional, still no open port 22) — add to `~/.ssh/config`:
+
+  ```sshconfig
+  host i-* mi-*
+    ProxyCommand sh -c "aws ssm start-session --target %h --document-name AWS-StartSSHSession --parameters 'portNumber=%p'"
+  ```
+
+  then `ssh ec2-user@"${INSTANCE_ID}"`.
+
+The operator's IAM principal needs `ssm:StartSession` (on the instance ARN or the
+`AWS-StartSSHSession` document), `ssm:TerminateSession`/`ssm:ResumeSession` (on
+`arn:aws:ssm:*:*:session/${aws:username}-*`), plus `ssm:DescribeInstanceInformation`
+and `ec2:DescribeInstances`.
+
+### Connecting to GCP instances (gcloud CLI)
+
+GCP VMs (see `_infra/gcp` / `_infra/modules/gcp-vm-standalone`, built from
+`andreswebs/public-vm/google`) get an external IP with tcp:22 opened to the
+module's `external_access_ip_whitelist`. SSH keys are managed by the `gcloud` CLI
+(`~/.ssh/google_compute_engine`), not committed anywhere.
+
+- One-time auth (the Ansible `gcp_compute` inventory plugin uses Application
+  Default Credentials):
+
+  ```sh
+  gcloud auth login
+  gcloud auth application-default login
+  gcloud config set project "${GOOGLE_PROJECT}"
+  ```
+
+- SSH into an instance (generates/pushes the key on first use):
+
+  ```sh
+  export GOOGLE_PROJECT="your-project-id"
+  export GOOGLE_ZONE="europe-west1-b"
+  export VM_NAME="poc"
+
+  gcloud compute ssh "${VM_NAME}" --project "${GOOGLE_PROJECT}" --zone "${GOOGLE_ZONE}"
+  ```
+
+  For an instance with no external IP, add `--tunnel-through-iap` (needs
+  `roles/iap.tunnelResourceAccessor` and firewall for `35.235.240.0/20` on tcp:22).
+
+- Populate `~/.ssh/config` so plain `ssh` and Ansible can reach the hosts:
+
+  ```sh
+  gcloud compute config-ssh   # re-run when IPs change
+  ssh "${VM_NAME}.${GOOGLE_ZONE}.${GOOGLE_PROJECT}"
+  ```
+
+- Key/user model:
+  - **Metadata SSH keys** (default): username is the local part of the key (e.g.
+    `andre`).
+  - **OS Login** (recommended): set metadata `enable-oslogin=TRUE` and grant
+    `roles/compute.osLogin`; username becomes email-derived (e.g.
+    `andre_p41_bizee_com`). `gcloud compute ssh` handles this automatically.
+
+### Ansible: GCP dynamic inventory
+
+The `gcp_compute` plugin discovers instances via ADC and groups them by network
+tag as `vm_tag_<tag>` (see `_config/inventory/example.gcp.yml`), which is what the
+GCP playbooks target (`vm_tag_k3s`, `vm_tag_<app>`).
+
+- Create the live inventory (gitignored; only `example.gcp.yml` is committed):
+
+  ```sh
+  cd _config
+  cp inventory/example.gcp.yml inventory/gcp.yml   # set your real project id + ansible_user
+  ```
+
+- Run a playbook:
+
+  ```sh
+  ansible-playbook -i inventory/gcp.yml playbooks/docker-app.gcp.yml -e app=whoami
+  ansible-playbook -i inventory/gcp.yml playbooks/k3s.gcp.yml
+  ```
+
+The `compose:` block in the inventory sets `ansible_host` to the external IP,
+`ansible_user`, and `ansible_ssh_private_key_file` to the gcloud-managed key.
 
 ### Ansible
 

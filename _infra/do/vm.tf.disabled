@@ -1,0 +1,23 @@
+data "digitalocean_ssh_key" "default" {
+  name = var.ssh_key_name
+}
+
+resource "digitalocean_droplet" "this" {
+  region    = var.region
+  size      = var.size
+  image     = var.image
+  ssh_keys  = [data.digitalocean_ssh_key.default.id]
+  name      = "poc"
+  user_data = <<-EOF
+    #!/usr/bin/env bash
+    apt-get update
+  EOF
+}
+
+output "droplet_id" {
+  value = digitalocean_droplet.this.id
+}
+
+output "ipv4_address" {
+  value = digitalocean_droplet.this.ipv4_address
+}

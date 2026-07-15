@@ -1,0 +1,34 @@
+data "vultr_ssh_key" "default" {
+  filter {
+    name   = "name"
+    values = [var.ssh_key_name]
+  }
+}
+
+data "vultr_os" "this" {
+  filter {
+    name   = "name"
+    values = [var.os_name]
+  }
+}
+
+resource "vultr_instance" "this" {
+  region      = var.region
+  plan        = var.plan
+  os_id       = data.vultr_os.this.id
+  ssh_key_ids = [data.vultr_ssh_key.default.id]
+  label       = "poc"
+  hostname    = "poc"
+  user_data   = <<-EOF
+    #!/usr/bin/env bash
+    apt-get update
+  EOF
+}
+
+output "instance_id" {
+  value = vultr_instance.this.id
+}
+
+output "main_ip" {
+  value = vultr_instance.this.main_ip
+}
