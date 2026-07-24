@@ -1,0 +1,16 @@
+---
+services:
+  cron:
+    image: alpine:3.24
+    init: true
+    command: crond -f -L /dev/stdout
+    configs:
+      - source: crontab
+        target: /etc/crontabs/root
+        mode: "0600"
+
+configs:
+  crontab:
+    content: |
+      # min hour dom month dow command
+      * * * * * echo "$$(date): ok!" > /proc/1/fd/1 2>&1

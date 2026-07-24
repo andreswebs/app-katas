@@ -1,0 +1,2 @@
+# min hour dom month dow command
+* * * * * echo "$(date): ok!" > /proc/1/fd/1 2>&1
