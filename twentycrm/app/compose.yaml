@@ -11,7 +11,7 @@ networks:
 services:
   server:
     container_name: twentycrm-server
-    image: twentycrm/twenty:${TWENTYCRM_VERSION:-v1.5}
+    image: twentycrm/twenty:${TWENTYCRM_VERSION:-v1.23}
     init: true
     restart: always
 
@@ -25,6 +25,8 @@ services:
       - NODE_PORT=${NODE_PORT:-3000}
 
       - APP_SECRET
+      - ENCRYPTION_KEY
+      - FALLBACK_ENCRYPTION_KEY
 
       - SERVER_URL
       - PG_DATABASE_URL
@@ -78,6 +80,8 @@ services:
 
     environment:
       - APP_SECRET
+      - ENCRYPTION_KEY
+      - FALLBACK_ENCRYPTION_KEY
 
       - SERVER_URL
       - PG_DATABASE_URL
