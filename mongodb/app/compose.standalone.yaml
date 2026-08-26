@@ -1,0 +1,65 @@
+---
+# The "before" state: a standalone mongod with root auth and no keyfile, which
+# is what a single-container deployment normally looks like before anyone needs
+# a replica set. Shares `mongo-data` with compose.yaml so exercise 2 can convert
+# that data directory in place.
+name: mongodb
+
+services:
+  mongo:
+    container_name: mongodb
+    image: mongo:${MONGO_TAG:-8.0.29}
+    command: mongod --wiredTigerCacheSizeGB 2 --quiet
+
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_ROOT_USER}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_ROOT_PASSWORD}
+
+    volumes:
+      - mongo-data:/data/db
+      - ../dump:/dump
+
+    ports:
+      - "127.0.0.1:${MONGO_EXPOSED_PORT:-27018}:27017"
+
+    networks:
+      default:
+        aliases:
+          - mongo
+          - mongodb
+
+    mem_limit: 2.5g
+
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 30s
+      start_period: 60s
+      start_interval: 2s
+      timeout: 5s
+      retries: 5
+
+    restart: always
+
+    logging:
+      driver: json-file
+      options:
+        max-size: "50m"
+        max-file: "3"
+
+  client:
+    container_name: mongodb-client
+    image: node:22-bookworm-slim
+    profiles: ["client"]
+    working_dir: /client
+    environment:
+      - MONGO_URI
+      - MONGO_DB=${MONGO_DB:-appdb}
+      - WATCH_EVENTS
+    volumes:
+      - ../client:/client
+    command: ["sleep", "infinity"]
+
+# No mongo-keyfile volume here on purpose. Internal cluster authentication is
+# what --replSet plus auth requires, and the "before" state has neither.
+volumes:
+  mongo-data: {}

@@ -1,0 +1,84 @@
+---
+# The test and CI shape: a replica set with no authorization, and therefore no
+# keyfile at all.
+#
+# This is a genuinely different configuration, not a simplification of
+# compose.yaml. Internal cluster authentication is only required when
+# authorization is enabled, so a stack with no root credentials gains --replSet
+# for free. Getting that wrong in either direction costs an afternoon: adding a
+# keyfile here is pointless ceremony, and omitting one from an authenticated
+# stack is a refusal to start.
+#
+# The data directory is a tmpfs, which is what a test stack normally wants and
+# what keeps this file from touching the data compose.yaml and
+# compose.standalone.yaml share.
+#
+# On initiation: the sidecar below is the compose-native answer. A CI service
+# container has no sidecar available and cannot initiate itself, so there the
+# same command runs from the job container instead. See the README for that
+# form; it is the same script and the same guard.
+name: mongodb
+
+services:
+  mongo:
+    container_name: mongodb
+    image: mongo:${MONGO_TAG:-8.0.29}
+    command: mongod --quiet --replSet ${RS_NAME:-rs0} --bind_ip_all
+
+    tmpfs:
+      - /data/db
+
+    ports:
+      - "127.0.0.1:${MONGO_EXPOSED_PORT:-27018}:27017"
+
+    networks:
+      default:
+        aliases:
+          - mongo
+          - mongodb
+
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 30s
+      start_period: 60s
+      start_interval: 2s
+      timeout: 5s
+      retries: 5
+
+    restart: always
+
+    logging:
+      driver: json-file
+      options:
+        max-size: "50m"
+        max-file: "3"
+
+  # No MONGO_ROOT_USER or MONGO_ROOT_PASSWORD passed through: rs-init.sh builds
+  # an unauthenticated connection string when they are absent.
+  mongo-init:
+    container_name: mongodb-init
+    image: mongo:${MONGO_TAG:-8.0.29}
+    entrypoint: ["bash", "/utils/rs-init.sh"]
+    environment:
+      - RS_NAME=${RS_NAME:-rs0}
+      - RS_MEMBER_HOST=${RS_MEMBER_HOST:-mongodb:27017}
+      - RS_INIT_TARGET=${RS_INIT_TARGET:-mongo:27017}
+    volumes:
+      - ../utils:/utils:ro
+    depends_on:
+      mongo:
+        condition: service_healthy
+    restart: "no"
+
+  client:
+    container_name: mongodb-client
+    image: node:22-bookworm-slim
+    profiles: ["client"]
+    working_dir: /client
+    environment:
+      - MONGO_URI
+      - MONGO_DB=${MONGO_DB:-appdb}
+      - WATCH_EVENTS
+    volumes:
+      - ../client:/client
+    command: ["sleep", "infinity"]

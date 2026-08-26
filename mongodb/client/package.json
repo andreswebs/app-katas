@@ -1,0 +1,13 @@
+{
+  "name": "mongodb-client",
+  "private": true,
+  "type": "module",
+  "description": "One pinned MongoDB driver, isolated from any application",
+  "scripts": {
+    "probe": "node probe.mjs",
+    "watch": "node watch.mjs"
+  },
+  "dependencies": {
+    "mongodb": "6.16.0"
+  }
+}

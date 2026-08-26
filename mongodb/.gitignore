@@ -1,0 +1,26 @@
+# The real .envrc stays ignored; the example is committed. The negation is
+# needed because a global excludesFile pattern of `.env*` catches it, and the
+# repo root only un-ignores `.env.example`.
+!.envrc.example
+
+# terraform.tfstate contains the Atlas connection strings and the generated
+# database-user passwords in cleartext. Confirm this file is in effect before
+# the first `terraform apply`, not after.
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfvars
+*.tfvars.json
+tfplan
+tfplan.*
+
+# mongodump archives from exercises 2 and 13.
+dump/
+
+client/node_modules/
+client/package-lock.json
+
+# Belt and braces: the keyfile lives in a named volume and should never reach
+# the tree, but it is a secret and this is cheap.
+*keyfile*
+!utils/keyfile.sh

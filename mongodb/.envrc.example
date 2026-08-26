@@ -1,0 +1,27 @@
+# shellcheck shell=bash
+#
+# Copy to .envrc, which is gitignored, and fill in the real values.
+# The committed .env.example documents the same variables for the compose files.
+
+export MONGO_TAG="8.0.29"
+
+export MONGO_ROOT_USER="root"
+MONGO_ROOT_PASSWORD=$(cat "${HOME}/.secrets.d/local-dev-mongodb.pw.txt")
+export MONGO_ROOT_PASSWORD
+
+export MONGO_DB="appdb"
+export MONGO_EXPOSED_PORT="27018"
+
+export RS_NAME="rs0"
+export RS_MEMBER_HOST="mongodb:27017"
+export RS_INIT_TARGET="mongo:27017"
+
+# Atlas, for tf/. Either the programmatic API key pair:
+export MONGODB_ATLAS_PUBLIC_KEY="setthistoasecret"
+export MONGODB_ATLAS_PRIVATE_KEY="setthistoasecret"
+# or the service account pair the 2.x provider accepts:
+# export MONGODB_ATLAS_CLIENT_ID="setthistoasecret"
+# export MONGODB_ATLAS_CLIENT_SECRET="setthistoasecret"
+
+export TF_VAR_atlas_org_id="setthistoyourorgid"
+export TF_VAR_operator_ip="203.0.113.10"

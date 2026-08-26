@@ -1,0 +1,101 @@
+---
+name: mongodb
+
+services:
+  keyfile-init:
+    container_name: mongodb-keyfile-init
+    image: mongo:${MONGO_TAG:-8.0.29}
+    entrypoint: ["bash", "/utils/keyfile.sh"]
+    environment:
+      - KEYFILE_PATH=/keyfile/mongodb-keyfile
+    volumes:
+      - ../utils:/utils:ro
+      - mongo-keyfile:/keyfile
+    restart: "no"
+
+  mongo:
+    container_name: mongodb
+    image: mongo:${MONGO_TAG:-8.0.29}
+    command: >
+      mongod --wiredTigerCacheSizeGB 2 --quiet
+      --replSet ${RS_NAME:-rs0}
+      --keyFile /keyfile/mongodb-keyfile
+      --bind_ip_all
+
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_ROOT_USER}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_ROOT_PASSWORD}
+
+    volumes:
+      - mongo-data:/data/db
+      - mongo-keyfile:/keyfile:ro
+      - ../dump:/dump
+
+    ports:
+      - "127.0.0.1:${MONGO_EXPOSED_PORT:-27018}:27017"
+
+    # Two names for one container, on purpose. This is what makes the
+    # member-hostname trap in exercise 4 observable instead of theoretical.
+    networks:
+      default:
+        aliases:
+          - mongo
+          - mongodb
+
+    depends_on:
+      keyfile-init:
+        condition: service_completed_successfully
+
+    # A bounded cache and a memory cap, so the server behaves like a modest
+    # production container rather than an unbounded one.
+    mem_limit: 2.5g
+
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 30s
+      start_period: 60s
+      start_interval: 2s
+      timeout: 5s
+      retries: 5
+
+    restart: always
+
+    logging:
+      driver: json-file
+      options:
+        max-size: "50m"
+        max-file: "3"
+
+  mongo-init:
+    container_name: mongodb-init
+    image: mongo:${MONGO_TAG:-8.0.29}
+    entrypoint: ["bash", "/utils/rs-init.sh"]
+    environment:
+      - MONGO_ROOT_USER
+      - MONGO_ROOT_PASSWORD
+      - RS_NAME=${RS_NAME:-rs0}
+      - RS_MEMBER_HOST=${RS_MEMBER_HOST:-mongodb:27017}
+      - RS_INIT_TARGET=${RS_INIT_TARGET:-mongo:27017}
+    volumes:
+      - ../utils:/utils:ro
+    depends_on:
+      mongo:
+        condition: service_healthy
+    restart: "no"
+
+  client:
+    container_name: mongodb-client
+    image: node:22-bookworm-slim
+    profiles: ["client"]
+    working_dir: /client
+    environment:
+      - MONGO_URI
+      - MONGO_DB=${MONGO_DB:-appdb}
+      - WATCH_EVENTS
+    volumes:
+      - ../client:/client
+    command: ["sleep", "infinity"]
+
+volumes:
+  mongo-data: {}
+  mongo-keyfile: {}

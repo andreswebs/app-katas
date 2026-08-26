@@ -1,0 +1,74 @@
+#!/usr/bin/env bash
+#
+# Idempotent rs.initiate(), safe to run on every `up`.
+#
+# It has to come from outside the server, authenticated. The official image
+# strips --replSet and --keyFile from the temporary mongod that creates the root
+# user (`_mongod_hack_ensure_no_arg_val` in the entrypoint), and adds no
+# --transitionToAuth, so on a fresh volume the root user is created standalone
+# and the real mongod comes up with replication and auth already on.
+#
+# This is also why the popular healthcheck-as-initiator pattern does not work
+# here: `db.adminCommand('ping')` needs no auth, but `rs.status()` does.
+#
+# directConnection=true is used *here only*, because before initiation there is
+# no topology to discover. Application clients must not use it: it suppresses
+# exactly the topology awareness exercise 4 exists to observe.
+
+set -euo pipefail
+
+RS_NAME="${RS_NAME:-rs0}"
+RS_MEMBER_HOST="${RS_MEMBER_HOST:-mongodb:27017}"
+RS_INIT_TARGET="${RS_INIT_TARGET:-mongo:27017}"
+
+# Credentials are optional, because a stack with authorization disabled needs no
+# keyfile and no user. Absent credentials means an unauthenticated connection
+# string, which is the test and CI shape.
+if [ -n "${MONGO_ROOT_USER:-}" ] && [ -n "${MONGO_ROOT_PASSWORD:-}" ]; then
+  uri="mongodb://${MONGO_ROOT_USER}:${MONGO_ROOT_PASSWORD}@${RS_INIT_TARGET}/admin?directConnection=true"
+  auth_mode="authenticated"
+else
+  uri="mongodb://${RS_INIT_TARGET}/admin?directConnection=true"
+  auth_mode="no auth"
+fi
+
+echo "rs-init: target=${RS_INIT_TARGET} set=${RS_NAME} member=${RS_MEMBER_HOST} (${auth_mode})"
+
+mongosh "${uri}" --quiet --eval "
+  const memberHost = '${RS_MEMBER_HOST}';
+  const setName = '${RS_NAME}';
+  try {
+    const status = rs.status();
+    print('rs-init: already initiated as ' + status.set + ', members: ' +
+      status.members.map((m) => m.name + '=' + m.stateStr).join(', '));
+  } catch (err) {
+    if (err.codeName !== 'NotYetInitialized' && err.code !== 94) {
+      print('rs-init: rs.status() failed unexpectedly: ' +
+        err.codeName + ' (' + err.code + ') ' + err.message);
+      quit(1);
+    }
+    print('rs-init: not initiated, initiating with member ' + memberHost);
+    const res = rs.initiate({
+      _id: setName,
+      members: [{ _id: 0, host: memberHost }],
+    });
+    printjson(res);
+  }
+"
+
+echo "rs-init: waiting for PRIMARY"
+mongosh "${uri}" --quiet --eval "
+  for (let i = 0; i < 60; i++) {
+    try {
+      if (db.hello().isWritablePrimary) {
+        print('rs-init: PRIMARY, hello().me = ' + db.hello().me);
+        quit(0);
+      }
+    } catch (err) {
+      // still stepping up
+    }
+    sleep(1000);
+  }
+  print('rs-init: timed out waiting for PRIMARY');
+  quit(1);
+"

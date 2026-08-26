@@ -13,6 +13,9 @@ services:
     restart: unless-stopped
     networks:
       - proxy
+    environment:
+      WHOAMI_PORT_NUMBER: ${APP_PORT}
+      WHOAMI_NAME: ${APP_NAME}
     labels:
       - traefik.enable=true
       - traefik.docker.network=proxy
