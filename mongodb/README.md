@@ -18,6 +18,12 @@ reverting a `featureCompatibilityVersion` bump. Asymmetric reversals are the
 ones that have to be written down beforehand, because the window is the worst
 possible place to discover them.
 
+**[RUNBOOK.md](RUNBOOK.md) is what these exercises were for.** This document is
+the rehearsal: numbered exercises, expected against observed, raw output. That one
+is the procedure the rehearsal produced, parameterised for a real deployment, with
+the reversal written out in full. Read this file to understand why each step is
+there; follow that one when converting something you care about.
+
 ## Status
 
 **Part 1 has been run end to end**, on Docker 29.5.3 (Rancher Desktop, Linux
@@ -79,6 +85,7 @@ The version-upgrade research and the five exercises that test it are kept in
 ```text
 mongodb/
   README.md                    exercises, expected results, findings table
+  RUNBOOK.md                   the procedure the exercises produced, parameterised
   .env.example                 committed; copy to app/.env
   .envrc.example               committed; copy to .envrc, which is ignored
   app/
@@ -173,9 +180,30 @@ The official image strips `--replSet` and `--keyFile` from the temporary
 
 So on a fresh volume the root user is created standalone, then the real `mongod`
 starts with replication and auth already on, and `rs.initiate()` must come from
-outside, authenticated. That is why a `mongo-init` one-shot is the right shape,
-and it rules out the popular healthcheck-as-initiator pattern:
-`db.adminCommand('ping')` needs no auth and works as-is, but `rs.status()` does.
+outside, authenticated. That is why a `mongo-init` one-shot is the right shape.
+
+It also rules out the popular healthcheck-as-initiator pattern, though for a
+narrower reason than it first appears: a healthcheck runs unauthenticated, and
+`rs.status()` needs credentials.
+
+**A healthcheck can still assert PRIMARY**, because `db.hello()` needs no
+credentials either and carries `isWritablePrimary`:
+
+```yaml
+healthcheck:
+  test:
+    ["CMD", "mongosh", "--quiet", "--eval", "quit(db.hello().isWritablePrimary ? 0 : 1)"]
+```
+
+Promoting the check from liveness to PRIMARY is worth doing. It gates dependent
+services on initiation rather than on the process being up, it needs no
+credentials in the compose file, and a standalone answers `isWritablePrimary`
+too, so the check stays correct if `--replSet` is ever removed.
+
+**It brings its own trap.** Once the healthcheck asserts PRIMARY, an initiator
+that waits on `service_healthy` can never run, because the condition it waits
+for is the one it exists to create. The initiator waits on `service_started` and
+does its own waiting, which is what the retry loop in `utils/rs-init.sh` is for.
 
 `utils/rs-init.sh` uses `directConnection=true`, and it is the only thing here
 that may. Before initiation there is no topology to discover. Application
@@ -383,6 +411,83 @@ sidecar involved at all, and on a second call immediately after that one, which
 reported `already initiated as rs0`. That last case is the one CI actually
 exercises, since the command runs on every job.
 
+#### What a real CI pipeline adds, that this exercise cannot
+
+The rehearsal above calls the script from a `mongo` image, on a Docker network of
+its own making. Both of those are conveniences a real pipeline does not grant, and
+running this against GitLab CI produced **four separate failures, each a genuine
+defect, none of them visible here.** They are worth knowing before writing a
+`before_script`, because each looks like something it is not.
+
+**1. The job image may have no MongoDB client, or one that is not on `PATH`.**
+Check before assuming the initiation can run from the job container. In the case
+measured, `mongosh` was absent entirely, and the language runtime's own package
+manager was present but unlinked, so `npm install -g mongosh` failed with
+`npm: command not found` while `node` worked. The giveaway had been in the job
+definition all along, in the shape of a build tool invoked as
+`<toolchain> npm install` rather than a bare `npm install`. Derive the directory
+from the runtime's symlink rather than writing the path out, because a bundled
+toolchain path usually embeds both a version and an architecture.
+
+**2. A client that exits non-zero after a successful command breaks every check.**
+`mongosh 2.10.0` evaluates the command, prints the right answer, then throws
+`TypeError: (0 , logging_2.getAiAgent) is not a function` on its way out and exits
+
+1. A readiness loop reading exit codes reports 60 unreachable servers while 60
+pings succeed. **Pin the client version**, and pin it for this reason rather than
+for reproducibility: 2.9.2 is the newest that exits 0.
+
+The general form is worth more than the version: `mongosh --version` exiting 0
+proves nothing about `mongosh --eval` exiting 0. Verify the thing the next step
+depends on.
+
+**3. A CI service container does not resolve its own alias.** This is exercise
+4's trap, arriving from the one direction that exercise cannot produce. The alias
+resolves from the job container and not from inside the service, and
+`rs.initiate()` checks the member host server-side against the node's own
+interfaces, so initiating with the alias fails:
+
+```text
+No host described in new configuration with {version: 1, term: 0}
+for replica set rs0 maps to this node
+```
+
+**Initiate with the service's IP address**, resolved from the job container
+immediately before the call. An IP always maps to itself, and the job container
+reaches it directly, so the client seeds the alias, is redirected to the IP, and
+connects.
+
+**This is right in CI and wrong everywhere else.** A CI replica set lives for
+exactly one job, so an ephemeral address is deterministic across its whole
+lifetime. A dev or production stack keeps a name-based member host, because its
+configuration document outlives any container and an address that changes on
+recreate leaves a stale member behind.
+
+A per-build network, which on GitLab is `FF_NETWORK_PER_BUILD`, also fixes this
+by giving the service an alias it can resolve. Prefer the IP: one shell line
+resolving one name beats changing how the whole build network is constructed.
+
+**4. Resolve one address family explicitly.** `getent hosts` returns whichever
+family the resolver puts first, and on one runner that was IPv6, which
+`rs.initiate()` refuses:
+
+```text
+More than one ':' detected. If this is an ipv6 address, it needs to be
+surrounded by '[' and ']'
+```
+
+The address and the port are both colon-separated, so a bare IPv6 member host is
+ambiguous and the server declines to guess. Ask for one family with
+`getent ahostsv4`, and bracket the address if IPv6 is all a resolver offers.
+
+Together these are one lesson about where to look. Every one of the four
+presented as a networking problem, and none of them was: three were about the
+client, and the fourth was about the server's own view of a name. The change that
+actually resolved them was making the readiness loop print DNS, `/etc/hosts`, a
+raw TCP probe and the client's real error, one run before any fix existed. **A
+wait loop that swallows its error turns every failure into the same wrong
+story.**
+
 ### Exercise 2: in-place standalone to replica set conversion
 
 The step that touches real data. The standalone's data becomes the primary's
@@ -549,6 +654,20 @@ after the handshake succeeds.
 
 The claim under test: initiate with the name every client can already resolve,
 and no client's connection string needs to change.
+
+**Before reaching for a second name, check whether one already exists.** Compose
+publishes a service's `container_name` as a network alias alongside the service
+name, so a service named `mongo` with `container_name: liane-mongo` answers to
+both, confirmed with `docker inspect`:
+
+```text
+"Aliases": ["liane-mongo", "mongo"]
+```
+
+That is why `compose.yaml` here declares its aliases explicitly: this exercise
+needs two names it controls in order to make the trap observable. In a real stack
+where two clients already disagree about the name, the second alias is usually
+there for free, and it decides the member host with no compose change at all.
 
 Start from a set initiated as `mongodb:27017`, which is the default:
 
@@ -1095,6 +1214,7 @@ not run on Flex is recorded as blocked with the reason, not left blank.
 | --- | ------------------------------- | -------- | ---------------- | ---------------- |
 | 1   | A one-shot initiator is idempotent; the entrypoint creates root standalone | Confirmed. Temp `mongod` runs with no `replSet`/`keyFile`/auth, then real one with all three. Initiator idempotent across 3 runs, exit 0; `restart` returns `PRIMARY` in ~1s unaided. `mongo:8.0` and `mongo:8.0.29` are the **same digest today**, so the pin costs no downtime now. Tools 100.18.0 | 8.0.29, self-hosted | No |
 | 1b  | A replica set with no authorization needs no keyfile; CI initiates from outside | Confirmed. `--replSet` with no auth needs **no keyfile**: options show `replSet: rs0` and no `keyFile`/`authorization`. `rs.status()` works unauthenticated. Same script from a job container is idempotent, exit 0 | 8.0.29, self-hosted | No |
+| 1c  | The rehearsed CI variant is what a real pipeline needs | **Wrong in four ways**, each a real defect and none reproducible in this kata. Job image had no `mongosh` and an unlinked `npm`. `mongosh 2.10.0` prints the right answer and exits 1 (`getAiAgent is not a function`), so 60 successful pings read as unreachable; 2.9.2 exits 0. A service container **does not resolve its own alias**, so `rs.initiate()` refuses the member host; the fix is the service's **IP**, resolved job-side. `getent hosts` returned IPv6 first, which `rs.initiate()` refuses unbracketed; `getent ahostsv4` fixes it | 8.0.29, GitLab CI, `mongosh` 2.9.2/2.10.0 | **Yes**: the CI variant needs a client check, a pinned client, an IP member host and one address family |
 | 2   | A standalone converts in place; nothing is copied | Confirmed. 5,000 docs seeded on the standalone, dumped (87 KB gz), then served by the replica set on the same volume. Count unchanged, nothing copied. `done dumping (5000 documents)` matched the pre-dump count exactly | 8.0.29, self-hosted | No |
 | 3   | Reverting needs `local` dropped first | **Wrong, and dangerously so.** `mongod` does **not** refuse: it starts and serves, with warning 20547. TTL monitor never starts (`ttl.passes` 0 over 20s at a 1s interval; 21 after the fix). `root` **cannot** drop `local` or the config doc: `Unauthorized (13)` on both, with or without `--replSet`. Needs a temporary `__system` grant | 8.0.29, self-hosted | **Yes** — the reversal is not blocked, it is silently degrading, and it needs a role grant |
 | 4   | Initiate with the name every client resolves, and no client changes | Partly. Both names work in both directions here, so the name alone is not the trap. `rs.initiate()` **refuses** an unmappable host outright (initiator exits 1). Real failure needs a client-side resolution gap: reproduced as `MongoServerSelectionError: getaddrinfo ENOTFOUND mongo`, **naming the member host, not the seed**. `directConnection=true` passes 11/11 on that same broken topology | 8.0.29, self-hosted | Restate as *resolves from every client network*, not as a specific name |

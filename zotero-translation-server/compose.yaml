@@ -1,0 +1,7 @@
+services:
+  translation-server:
+    image: zotero/translation-server:latest
+    restart: unless-stopped
+    ports:
+      # Loopback only: the server has no auth and fetches arbitrary URLs on request.
+      - "127.0.0.1:1969:1969"

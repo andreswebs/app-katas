@@ -1,0 +1,15 @@
+---
+services:
+  neo4j:
+    image: neo4j:latest
+    restart: always
+    volumes:
+      - ${LOCAL_NEO4J_DATA_DIR:-/var/lib/neo4j}/logs:/logs
+      - ${LOCAL_NEO4J_DATA_DIR:-/var/lib/neo4j}/conf:/conf
+      - ${LOCAL_NEO4J_DATA_DIR:-/var/lib/neo4j}/data:/data
+      - ${LOCAL_NEO4J_DATA_DIR:-/var/lib/neo4j}/plugins:/plugins
+    environment:
+      - NEO4J_AUTH # structure: 'username/password'
+    ports:
+      - 7474:7474
+      - 7687:7687

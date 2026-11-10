@@ -1,0 +1,113 @@
+---
+name: warpgate
+
+networks:
+  backend:
+    name: warpgate-backend
+
+services:
+  warpgate-db:
+    container_name: warpgate-db
+    image: postgres:${POSTGRES_VERSION:-17.7-alpine}
+    restart: always
+
+    environment:
+      - PGDATA=${PGDATA:-/var/lib/postgresql/data}
+      - POSTGRES_DB
+      - POSTGRES_USER
+      - POSTGRES_PASSWORD
+
+    volumes:
+      - ${POSTGRES_LOCAL_DATA_DIR:-/var/lib/postgresql/data}:${POSTGRES_DATA_DIR:-/var/lib/postgresql/data}
+
+    healthcheck:
+      test: pg_isready -U $${POSTGRES_USER} -h localhost -d $${POSTGRES_DB}
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+    networks:
+      - backend
+
+  # `/data` is a named volume, not a host bind-mount: the image runs as a
+  # non-root `warpgate` user (uid 1000) with no entrypoint step to chown a
+  # bind-mounted dir (unlike postgres's own entrypoint). Docker only seeds
+  # ownership from the image on a named volume's first use; a bind-mount
+  # exposes the host path as-is and fails with "Permission denied".
+  #
+  # `warpgate unattended-setup` also refuses to run once /data/warpgate.yaml
+  # exists, so this container must no-op (exit 0) on every restart after the
+  # first successful run, rather than fail and block the main service's
+  # `service_completed_successfully` dependency below.
+  warpgate-setup:
+    container_name: warpgate-setup
+    image: ghcr.io/warp-tech/warpgate:${WARPGATE_VERSION:-latest}
+    restart: "no"
+    # A bare `command: |` here would let compose shell-tokenize the script
+    # into separate argv entries (breaking on every space), so it must stay
+    # wrapped as a one-element list to reach /bin/sh -c as one argument.
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        if [ -f /data/warpgate.yaml ]; then
+          echo "warpgate.yaml already exists, skipping setup"
+          exit 0
+        fi
+        exec warpgate unattended-setup \
+          --database-url "${WARPGATE_DATABASE_URL}" \
+          --data-path /data \
+          --http-port 8888 \
+          --ssh-port 2222 \
+          --mysql-port 33306 \
+          --postgres-port 55432 \
+          --kubernetes-port 8443 \
+          --external-host "${WARPGATE_EXTERNAL_HOST}" \
+          --record-sessions
+
+    environment:
+      - WARPGATE_DATABASE_URL
+      - WARPGATE_EXTERNAL_HOST
+      # Read by `unattended-setup` when --admin-password isn't passed; kept
+      # out of the command line so it doesn't show up in `docker inspect`/`ps`.
+      - WARPGATE_ADMIN_PASSWORD
+
+    volumes:
+      - warpgate-data:/data
+
+    networks:
+      - backend
+
+    depends_on:
+      warpgate-db:
+        condition: service_healthy
+
+  warpgate:
+    container_name: warpgate
+    image: ghcr.io/warp-tech/warpgate:${WARPGATE_VERSION:-latest}
+    restart: always
+    stdin_open: true
+    tty: true
+
+    # Image already ships `HEALTHCHECK CMD warpgate healthcheck`; no override.
+
+    volumes:
+      - warpgate-data:/data
+
+    ports:
+      - ${WARPGATE_SSH_EXPOSED_PORT:-2222}:2222
+      - ${WARPGATE_HTTPS_EXPOSED_PORT:-8888}:8888
+      - ${WARPGATE_MYSQL_EXPOSED_PORT:-33306}:33306
+      - ${WARPGATE_POSTGRES_EXPOSED_PORT:-55432}:55432
+      - ${WARPGATE_KUBERNETES_EXPOSED_PORT:-8443}:8443
+
+    depends_on:
+      warpgate-setup:
+        condition: service_completed_successfully
+      warpgate-db:
+        condition: service_healthy
+
+    networks:
+      - backend
+
+volumes:
+  warpgate-data: {}
